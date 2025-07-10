@@ -1,0 +1,590 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+}
+
+model Statut {
+  idstatut          String   @id @unique @default(uuid())
+  codestatut        String   @unique @db.VarChar(255)
+  nomstatut         String   @unique @db.VarChar(255)
+  descriptionstatut String?
+  published         Boolean? @default(true) @db.Boolean
+  isDeleted         Boolean? @default(false) @db.Boolean
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  Cotation Cotation[]
+
+  Prestataire Prestataire[]
+}
+
+model Profession {
+  idprofession           String   @id @unique @default(uuid())
+  codeprofession         String   @unique @db.VarChar(255)
+  libelleprofession      String   @unique @db.VarChar(255)
+  descriptionsprofession String?
+  published              Boolean? @default(true) @db.Boolean
+  isDeleted              Boolean? @default(false) @db.Boolean
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  Assure Assure[]
+}
+
+model Qualite {
+  idqualite           String   @id @unique @default(uuid())
+  codequalite         String   @unique @db.VarChar(255)
+  libellequalite      String   @unique @db.VarChar(255)
+  descriptionsqualite String?
+  published           Boolean? @default(true) @db.Boolean
+  isDeleted           Boolean? @default(false) @db.Boolean
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  Assure Assure[]
+}
+
+model Activite {
+  idactivite          String   @id @unique @default(uuid())
+  codeactivite        String   @unique @db.VarChar(255)
+  dateactivite        DateTime @default(now())
+  descriptionactivite String?
+  published           Boolean? @default(true) @db.Boolean
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  isDeleted           Boolean? @default(false) @db.Boolean
+
+  Assure Assure[]
+}
+
+model Agence {
+  idagence          String   @id @unique @default(uuid())
+  nomagence         String   @unique @db.VarChar(255)
+  codeagence        String   @unique @db.VarChar(255)
+  responsableagence String?  @db.VarChar(255)
+  emailagence       String?  @db.VarChar(255)
+  siteagence        String?  @db.VarChar(255)
+  phoneagence       String?  @db.VarChar(255)
+  faxagence         String?  @db.VarChar(255)
+  longitudeagence   String?  @db.VarChar(255)
+  latitudeagence    String?  @db.VarChar(255)
+  descriptionagence String?
+  adresseagence     String?
+  published         Boolean? @default(true) @db.Boolean
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  isDeleted         Boolean? @default(false) @db.Boolean
+
+  User User[]
+}
+
+model Prestataire {
+  idprestataire          String   @id @unique @default(uuid())
+  codeprestataire        String   @unique @db.VarChar(255)
+  nomprestataire         String   @unique @db.VarChar(255)
+  responsableprestataire String?  @db.VarChar(255)
+  emailprestataire       String?  @db.VarChar(255)
+  siteprestataire        String?  @db.VarChar(255)
+  phoneprestataire       String?  @db.VarChar(255)
+  faxprestataire         String?  @db.VarChar(255)
+  longitudeprestataire   String?  @db.VarChar(255)
+  latitudeprestataire    String?  @db.VarChar(255)
+  descriptionprestataire String?
+  adresseprestataire     String?
+  published              Boolean? @default(true) @db.Boolean
+  isDeleted              Boolean? @default(false) @db.Boolean
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+  statutId               String
+  Statut                 Statut   @relation(fields: [statutId], references: [idstatut], onDelete: Cascade, onUpdate: NoAction)
+
+  User User[]
+
+  Cotation Cotation[]
+}
+
+model Assure {
+  idassure          String     @id @unique @default(uuid())
+  codeassure        String     @unique @db.VarChar(255)
+  nomassure         String     @db.VarChar(255)
+  prenomassure      String?    @db.VarChar(255)
+  emailassure       String?    @db.VarChar(255)
+  siteassure        String?    @db.VarChar(255)
+  phoneassure       String?    @db.VarChar(255)
+  gsmassure         String?    @db.VarChar(255)
+  faxassure         String?    @db.VarChar(255)
+  descriptionassure String?
+  adresseassure     String?
+  activiteId        String
+  Activite          Activite   @relation(fields: [activiteId], references: [idactivite], onDelete: Cascade, onUpdate: NoAction)
+  qualiteId         String
+  Qualite           Qualite    @relation(fields: [qualiteId], references: [idqualite], onDelete: Cascade, onUpdate: NoAction)
+  professionId      String
+  Profession        Profession @relation(fields: [professionId], references: [idprofession], onDelete: Cascade, onUpdate: NoAction)
+  published         Boolean?   @default(true) @db.Boolean
+  isDeleted         Boolean?   @default(false) @db.Boolean
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+
+  Cotation Cotation[]
+
+  Document Document[]
+}
+
+model Energie {
+  idenergie          String     @id @unique @default(uuid())
+  codeenergie        String     @unique @db.VarChar(255)
+  nomenergie         String     @unique @db.VarChar(255)
+  descriptionenergie String?
+  published          Boolean?   @default(true) @db.Boolean
+  isDeleted          Boolean?   @default(false) @db.Boolean
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  Vehicule           Vehicule[]
+}
+
+model Marque {
+  idmarque          String     @id @unique @default(uuid())
+  codemarque        String     @unique @db.VarChar(255)
+  nommarque         String     @unique @db.VarChar(255)
+  descriptionmarque String?
+  published         Boolean?   @default(true) @db.Boolean
+  isDeleted         Boolean?   @default(false) @db.Boolean
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  Vehicule          Vehicule[]
+
+  Modele Modele[]
+}
+
+model Modele {
+  idmodele          String     @id @unique @default(uuid())
+  codemodele        String     @unique @db.VarChar(255)
+  nommodele         String     @unique @db.VarChar(255)
+  descriptionmodele String?
+  published         Boolean?   @default(true) @db.Boolean
+  isDeleted         Boolean?   @default(false) @db.Boolean
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  marqueId          String
+  Marque            Marque     @relation(fields: [marqueId], references: [idmarque], onDelete: Cascade, onUpdate: NoAction)
+  Vehicule          Vehicule[]
+}
+
+model Tpuissance {
+  idpuissance    String   @id @unique @default(uuid())
+  codepuissance  String   @unique @db.VarChar(255)
+  nompuissance   String   @db.VarChar(255)
+  puissance_from Int?     @db.Integer
+  puissance_to   Int?     @db.Integer
+  descriptionpuissance String?
+  published      Boolean? @default(true) @db.Boolean
+  isDeleted      Boolean? @default(false) @db.Boolean
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  Prime    Prime[]
+  Vehicule Vehicule[]
+}
+
+model Tdocument {
+  idtdoc          String   @id @unique @default(uuid())
+  codetdoc        String   @unique @db.VarChar(255)
+  nomtdoc         String   @db.VarChar(255)
+  descriptiontdoc String?
+  published       Boolean? @default(true) @db.Boolean
+  isDeleted       Boolean? @default(false) @db.Boolean
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  PackTdoc PackTdoc[]
+
+  Document Document[]
+}
+
+model Garantie {
+  idgarantie          String   @id @unique @default(uuid())
+  codegarantie        String   @unique @db.VarChar(255)
+  nomgarantie         String   @db.VarChar(255)
+  photogarantie       String?  @unique @db.VarChar(255)
+  descriptiongarantie String?
+  published           Boolean? @default(true) @db.Boolean
+  isDeleted           Boolean? @default(false) @db.Boolean
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  PackGarantie PackGarantie[]
+
+  CotationGarantie CotationGarantie[]
+}
+
+model GarantiePT {
+  idgarantiept          String   @id @unique @default(uuid())
+  codegarantiept        String   @unique @db.VarChar(255)
+  nomgarantiept         String   @db.VarChar(255)
+  photogarantiept       String?  @unique @db.VarChar(255)
+  descriptiongarantiept String?
+  published             Boolean? @default(true) @db.Boolean
+  isDeleted             Boolean? @default(false) @db.Boolean
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  FormulePtGarantiePt FormulePtGarantiePt[]
+}
+
+model FormulePT {
+  idformulept          String   @id @unique @default(uuid())
+  codeformulept        String   @unique @db.VarChar(255)
+  nomformulept         String   @db.VarChar(255)
+  photoformulept       String?  @unique @db.VarChar(255)
+  montantformulept     Int?     @db.Integer
+  descriptionformulept String?
+  published            Boolean? @default(true) @db.Boolean
+  isDeleted            Boolean? @default(false) @db.Boolean
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  FormulePtGarantiePt FormulePtGarantiePt[]
+}
+
+model FormulePtGarantiePt {
+  idfg         String     @id @unique @default(uuid())
+  isActive     Boolean    @default(true)
+  garantiePtId String
+  GarantiePt   GarantiePT @relation(fields: [garantiePtId], references: [idgarantiept], onDelete: Cascade, onUpdate: NoAction)
+  formulePtId  String
+  FormulePt    FormulePT  @relation(fields: [formulePtId], references: [idformulept], onDelete: NoAction, onUpdate: NoAction)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Pack {
+  idpack          String   @id @unique @default(uuid())
+  codepack        String   @unique @db.VarChar(255)
+  nompack         String   @db.VarChar(255)
+  photopack       String?  @unique @db.VarChar(255)
+  ordrepack       Int?     @db.Integer
+  descriptionpack String?
+  withPT          Boolean? @default(false) @db.Boolean
+  cpEqVv          Boolean? @default(false) @db.Boolean
+  published       Boolean? @default(true) @db.Boolean
+  isDeleted       Boolean? @default(false) @db.Boolean
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  PackGarantie PackGarantie[]
+
+  PackTdoc PackTdoc[]
+
+  PackTage PackTage[]
+
+  Prime Prime[]
+}
+
+model PackGarantie {
+  idpg       String   @id @unique @default(uuid())
+  isActive   Boolean  @default(true) @db.Boolean
+  garantieId String
+  Garantie   Garantie @relation(fields: [garantieId], references: [idgarantie], onDelete: Cascade, onUpdate: NoAction)
+  packId     String
+  Pack       Pack     @relation(fields: [packId], references: [idpack], onDelete: NoAction, onUpdate: NoAction)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model PackTdoc {
+  idpt      String    @id @unique @default(uuid())
+  isActive  Boolean   @default(true) @db.Boolean
+  tdocId    String
+  Tdoc      Tdocument @relation(fields: [tdocId], references: [idtdoc], onDelete: Cascade, onUpdate: NoAction)
+  packId    String
+  Pack      Pack      @relation(fields: [packId], references: [idpack], onDelete: NoAction, onUpdate: NoAction)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Tage {
+  idtage          String   @id @unique @default(uuid())
+  codetage        String   @unique @db.VarChar(255)
+  nomtage         String   @db.VarChar(255)
+  age_from        Int?     @db.Integer
+  age_to          Int?     @db.Integer
+  descriptiontage String?
+  published       Boolean? @default(true) @db.Boolean
+  isDeleted       Boolean? @default(false) @db.Boolean
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  PackTage PackTage[]
+
+  Prime Prime[]
+}
+
+model PackTage {
+  idpa      String   @id @unique @default(uuid())
+  isActive  Boolean  @default(true) @db.Boolean
+  tageId    String
+  Tage      Tage     @relation(fields: [tageId], references: [idtage], onDelete: Cascade, onUpdate: NoAction)
+  packId    String
+  Pack      Pack     @relation(fields: [packId], references: [idpack], onDelete: NoAction, onUpdate: NoAction)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MethodePaiement {
+  idmethode                 String   @id @unique @default(uuid())
+  nomMethode                String   @unique @db.VarChar(255)
+  codeMethode               String   @unique @db.VarChar(255)
+  descriptionMethode        String?
+  name                      String?  @db.VarChar(255)
+  merchantID                String?  @unique @db.VarChar(255)
+  API_KEY                   String?
+  currencyCode              String?  @db.VarChar(255)
+  automaticRecurringPayment String?  @db.VarChar(255)
+  placeholder1              String?  @db.VarChar(255)
+  placeholder2              String?  @db.VarChar(255)
+  placeholder3              String?  @db.VarChar(255)
+  published                 Boolean? @default(true) @db.Boolean
+  isDeleted                 Boolean? @default(false) @db.Boolean
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model Parametre {
+  idparametre                String   @id @unique @default(uuid())
+  mailUserCreation           Boolean? @default(false) @db.Boolean
+  mailUserActivation         Boolean? @default(false) @db.Boolean
+  mailSouscriptionActivation Boolean? @default(false) @db.Boolean
+  mailSouscriptionSuspension Boolean  @default(false) @db.Boolean
+  mailDemandeCreation        Boolean  @default(false) @db.Boolean
+  nomcompagnie               String?  @db.VarChar(255)
+  logocompagnie              String?  @db.VarChar(255)
+  phonecompagnie             String?  @db.VarChar(255)
+  emailcompagnie             String?  @db.VarChar(255)
+  sitecompagnie              String?  @db.VarChar(255)
+  adressecompagnie           String?  @db.VarChar(255)
+  pgw_url                    String?  @db.VarChar(255)
+  pgw_secret                 String?  @db.VarChar(255)
+  isDeleted                  Boolean  @default(false) @db.Boolean
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+}
+
+model PasswordReset {
+  idreset   String   @id @unique @default(uuid())
+  email     String   @db.VarChar(255)
+  token     String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Franchise {
+  idfranchise          String   @id @unique @default(uuid())
+  codefranchise        String   @unique @db.VarChar(255)
+  nomafranchise        String?  @db.VarChar(255)
+  valeurafranchise     Int?     @db.Integer
+  descriptionfranchise String?
+  published            Boolean? @default(true) @db.Boolean
+  isDeleted            Boolean? @default(false) @db.Boolean
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  Prime Prime[]
+}
+
+model Capitaux {
+  idcapitaux          String   @id @unique @default(uuid())
+  nomcapitaux         String   @unique @db.VarChar(255)
+  codecapitaux        String   @unique @db.VarChar(255)
+  valeurcapitaux      Int?     @db.Integer
+  descriptioncapitaux String?
+  published           Boolean? @default(true) @db.Boolean
+  isDeleted           Boolean? @default(false) @db.Boolean
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  Prime Prime[]
+}
+
+model Prime {
+  idprime     String     @id @unique @default(uuid())
+  nomprime    String     @unique @db.VarChar(255)
+  codeprime   String     @unique @db.VarChar(255)
+  valeurprime Int?       @db.Integer
+  tageId      String
+  Tage        Tage       @relation(fields: [tageId], references: [idtage], onDelete: Cascade, onUpdate: NoAction)
+  packId      String
+  Pack        Pack       @relation(fields: [packId], references: [idpack], onDelete: NoAction, onUpdate: NoAction)
+  puissId     String
+  Tpuissance  Tpuissance @relation(fields: [puissId], references: [idpuissance], onDelete: NoAction, onUpdate: NoAction)
+  capitauxId  String
+  Capitaux    Capitaux   @relation(fields: [capitauxId], references: [idcapitaux], onDelete: NoAction, onUpdate: NoAction)
+  franchiseId String
+  Franchise   Franchise  @relation(fields: [franchiseId], references: [idfranchise], onDelete: NoAction, onUpdate: NoAction)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  published Boolean? @default(true) @db.Boolean
+  isDeleted Boolean? @default(false) @db.Boolean
+
+  Cotation Cotation[]
+}
+
+model Ressource {
+  idressource          String   @id @unique @default(uuid())
+  rcode                String
+  nomressource         String?
+  descriptionressource String?
+  published            Boolean  @default(true) @db.Boolean
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  User                 User[]
+  isDeleted            Boolean  @default(false) @db.Boolean
+}
+
+model User {
+  id                String         @id @unique @default(uuid())
+  email             String         @unique @db.VarChar(255)
+  phone             String         @unique @db.VarChar(255)
+  password          String
+  codeuser          String         @db.VarChar(250)
+  unom              String?        @db.VarChar(250)
+  uprenom           String?        @db.VarChar(250)
+  email_verified_at DateTime?      @db.Date
+  avatar            String?        @db.VarChar(250)
+  usession          String?        @db.VarChar(250)
+  ressourceId       String?
+  Ressource         Ressource?     @relation(fields: [ressourceId], references: [idressource], onDelete: NoAction)
+  prestataireId     String?
+  Prestataire       Prestataire?   @relation(fields: [prestataireId], references: [idprestataire], onDelete: NoAction)
+  agenceId          String?
+  Agence            Agence?        @relation(fields: [agenceId], references: [idagence], onDelete: NoAction, onUpdate: NoAction)
+  refreshTokens     RefreshToken[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  isDeleted         Boolean?       @default(false) @db.Boolean
+  published         Boolean?       @default(true) @db.Boolean
+
+  Document Document[]
+}
+
+model Document {
+  iddocument          String    @id @unique @default(uuid())
+  nomDocument         String?   @db.VarChar(255)
+  codeDocument        String    @unique @db.VarChar(255)
+  descriptionDocument String?
+  published           Boolean?  @default(true) @db.Boolean
+  imported            Boolean?  @default(false) @db.Boolean
+  isDeleted           Boolean?  @default(false) @db.Boolean
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  tdocId              String
+  Tdocument           Tdocument @relation(fields: [tdocId], references: [idtdoc], onDelete: Cascade, onUpdate: NoAction)
+  assureId            String
+  Assure              Assure    @relation(fields: [assureId], references: [idassure], onDelete: Cascade, onUpdate: NoAction)
+  cotationId          String
+  Cotataion           Cotation  @relation(fields: [cotationId], references: [idcotation], onDelete: Cascade, onUpdate: NoAction)
+  vehiculeId          String
+  Vehicule            Vehicule  @relation(fields: [vehiculeId], references: [idvehicule], onDelete: Cascade, onUpdate: NoAction)
+  userId              String?
+  User                User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model RefreshToken {
+  id          String   @id @unique @default(uuid())
+  hashedToken String
+  userId      String
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked     Boolean  @default(false) @db.Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted   Boolean  @default(false) @db.Boolean
+}
+
+model Vehicule {
+  idvehicule          String     @id @unique @default(uuid())
+  codevehicule        String     @db.VarChar(255)
+  dateMiseCirdulation DateTime?  @db.Date
+  valeurNeuve         Int?       @db.Integer
+  valeurvenale        Int?       @db.Integer
+  typeTransport       String     @db.VarChar(255)
+  nbPlace             Int?       @db.Integer
+  nbPlaceAssure       Int?       @db.Integer
+  nbPlaceSupprime     Int?       @db.Integer
+  immatriculation     String     @db.VarChar(255)
+  marqueId            String
+  Marque              Marque     @relation(fields: [marqueId], references: [idmarque], onDelete: Cascade, onUpdate: NoAction)
+  modeleId            String
+  Modele              Modele     @relation(fields: [modeleId], references: [idmodele], onDelete: Cascade, onUpdate: NoAction)
+  energieId           String
+  Energie             Energie    @relation(fields: [energieId], references: [idenergie], onDelete: Cascade, onUpdate: NoAction)
+  puissanceId         String
+  Puissance           Tpuissance @relation(fields: [puissanceId], references: [idpuissance], onDelete: Cascade, onUpdate: NoAction)
+  cotationId          String
+  Cotation            Cotation   @relation(fields: [cotationId], references: [idcotation], onDelete: Cascade, onUpdate: NoAction)
+  descriptionVehicule String?
+  photo1              String?    @db.VarChar(255)
+  photo2              String?    @db.VarChar(255)
+  photo3              String?    @db.VarChar(255)
+  photo4              String?    @db.VarChar(255)
+  published           Boolean?   @default(true) @db.Boolean
+  isDeleted           Boolean?   @default(false) @db.Boolean
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  Document Document[]
+}
+
+model Cotation {
+  idcotation           String      @id @unique @default(uuid())
+  codecotation         String      @unique @db.VarChar(255)
+  typecotation         String      @db.VarChar(255)
+  dureMois             Int?        @db.Integer
+  dureeJours           Int?        @db.Integer
+  dateEffet            DateTime?   @db.Date
+  dateEcheance         DateTime?   @db.Date
+  reductionBNS         Float?      @db.Real
+  reductionCommerciale Float?      @db.Real
+  descriptioncotation  String?
+  lieuCotation         String?
+  assureId             String
+  Assure               Assure      @relation(fields: [assureId], references: [idassure], onDelete: Cascade, onUpdate: NoAction)
+  statutId             String
+  Statut               Statut      @relation(fields: [statutId], references: [idstatut], onDelete: Cascade, onUpdate: NoAction)
+  prestataireId        String
+  Prestataire          Prestataire @relation(fields: [prestataireId], references: [idprestataire], onDelete: Cascade, onUpdate: NoAction)
+  primeId              String
+  Prime                Prime       @relation(fields: [primeId], references: [idprime], onDelete: Cascade, onUpdate: NoAction)
+  published            Boolean?    @default(true) @db.Boolean
+  isDeleted            Boolean?    @default(false) @db.Boolean
+  created_at           DateTime    @default(now())
+  updated_at           DateTime    @updatedAt
+
+  Vehicule Vehicule[]
+
+  CotationGarantie CotationGarantie[]
+
+  Document Document[]
+}
+
+model CotationGarantie {
+  idcg       String   @id @unique @default(uuid())
+  isActive   Boolean  @default(true) @db.Boolean
+  garantieId String
+  Garantie   Garantie @relation(fields: [garantieId], references: [idgarantie], onDelete: Cascade, onUpdate: NoAction)
+  cotationId String
+  Cotation   Cotation @relation(fields: [cotationId], references: [idcotation], onDelete: NoAction, onUpdate: NoAction)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
