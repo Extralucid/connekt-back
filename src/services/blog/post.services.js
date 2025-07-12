@@ -11,6 +11,7 @@ import redisClient from '../../config/redis.js';
 
 // soft delete tokens after usage.
 export const deletePost = async ({ post_id }) => {
+
     const post = await db.post.findUnique({
         where: { post_id: post_id },
     }); // Utilise Prisma avec findUnique
@@ -31,6 +32,11 @@ export const deletePost = async ({ post_id }) => {
 // Obtenir une post par ID
 export async function getPostById({ post_id }) {
     try {
+        const cacheKey = `cache:post:${post_id}`;
+        const cachedPost = await redisClient.get(cacheKey);
+
+        if (cachedPost) return JSON.parse(cachedPost);
+        
 
         const post = await db.post.findUnique({
             where: { post_id: post_id },
@@ -40,6 +46,7 @@ export async function getPostById({ post_id }) {
             throw new NotFoundError('Cette post n\'existe pas!');
         }
 
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(post)); // Cache for 60s
         return post;
     } catch (err) {
         throw new BadRequestError(err.message);

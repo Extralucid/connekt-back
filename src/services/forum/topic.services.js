@@ -31,7 +31,11 @@ export const deleteTopic = async ({ topic_id }) => {
 // Obtenir une topic par ID
 export async function getTopicById({topic_id}) {
     try {
+        const cacheKey = `cache:topic:${post_id}`;
+        const cachedTopic = await redisClient.get(cacheKey);
 
+        if (cachedTopic) return JSON.parse(cachedTopic);
+        
         const topic = await db.topic.findUnique({
             where: { topic_id: topic_id },
         }); // Utilise Prisma avec findUnique
@@ -40,6 +44,7 @@ export async function getTopicById({topic_id}) {
             throw new NotFoundError('Cette topic n\'existe pas!');
         }
 
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(topic)); // Cache for 60s
         return topic;
     } catch (err) {
         throw new BadRequestError(err.message);

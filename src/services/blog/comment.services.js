@@ -32,6 +32,11 @@ export const deleteComment = async ({ comment_id }) => {
 export async function getCommentById({comment_id}) {
     try {
 
+        const cacheKey = `cache:comment:${comment_id}`;
+        const cachedComment = await redisClient.get(cacheKey);
+
+        if (cachedComment) return JSON.parse(cachedComment);
+
         const comment = await db.comment.findUnique({
             where: { comment_id: comment_id },
         }); // Utilise Prisma avec findUnique
@@ -40,6 +45,7 @@ export async function getCommentById({comment_id}) {
             throw new NotFoundError('Cette comment n\'existe pas!');
         }
 
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(comment)); // Cache for 60s
         return comment;
     } catch (err) {
         throw new BadRequestError(err.message);

@@ -32,6 +32,11 @@ export const deleteForum = async ({ forum_id }) => {
 export async function getForumById({ forum_id }) {
     try {
 
+        const cacheKey = `cache:forum:${post_id}`;
+        const cachedForum = await redisClient.get(cacheKey);
+
+        if (cachedForum) return JSON.parse(cachedForum);
+        
         const forum = await db.forum.findUnique({
             where: { forum_id: forum_id },
         }); // Utilise Prisma avec findUnique
@@ -40,6 +45,7 @@ export async function getForumById({ forum_id }) {
             throw new NotFoundError('Cette forum n\'existe pas!');
         }
 
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(forum)); // Cache for 60s
         return forum;
     } catch (err) {
         throw new BadRequestError(err.message);

@@ -31,7 +31,11 @@ export const deleteReply = async ({ reply_id }) => {
 // Obtenir une reply par ID
 export async function getReplyById({reply_id}) {
     try {
+        const cacheKey = `cache:reply:${post_id}`;
+        const cachedReply = await redisClient.get(cacheKey);
 
+        if (cachedReply) return JSON.parse(cachedReply);
+        
         const reply = await db.reply.findUnique({
             where: { reply_id: reply_id },
         }); // Utilise Prisma avec findUnique
@@ -40,6 +44,7 @@ export async function getReplyById({reply_id}) {
             throw new NotFoundError('Cette reply n\'existe pas!');
         }
 
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(reply)); // Cache for 60s
         return reply;
     } catch (err) {
         throw new BadRequestError(err.message);

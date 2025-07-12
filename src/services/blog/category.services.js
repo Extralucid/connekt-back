@@ -32,6 +32,11 @@ export const deleteCategory = async ({ category_id }) => {
 export async function getCategoryById({category_id}) {
     try {
 
+        const cacheKey = `cache:category:${category_id}`;
+        const cachedCategory = await redisClient.get(cacheKey);
+
+        if (cachedCategory) return JSON.parse(cachedCategory);
+
         const category = await db.category.findUnique({
             where: { category_id: category_id },
         }); // Utilise Prisma avec findUnique
@@ -40,6 +45,7 @@ export async function getCategoryById({category_id}) {
             throw new NotFoundError('Cette category n\'existe pas!');
         }
 
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(category)); // Cache for 60s
         return category;
     } catch (err) {
         throw new BadRequestError(err.message);

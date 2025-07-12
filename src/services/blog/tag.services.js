@@ -31,6 +31,10 @@ export const deleteTag = async ({ tag_id }) => {
 // Obtenir une tag par ID
 export async function getTagById({tag_id}) {
     try {
+        const cacheKey = `cache:tag:${tag_id}`;
+        const cachedTag = await redisClient.get(cacheKey);
+
+        if (cachedTag) return JSON.parse(cachedTag);
 
         const tag = await db.tag.findUnique({
             where: { tag_id: tag_id },
@@ -40,6 +44,7 @@ export async function getTagById({tag_id}) {
             throw new NotFoundError('Cette tag n\'existe pas!');
         }
 
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(tag)); // Cache for 60s
         return tag;
     } catch (err) {
         throw new BadRequestError(err.message);
