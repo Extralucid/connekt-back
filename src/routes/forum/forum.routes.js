@@ -1,7 +1,7 @@
 import router from 'express';
 import { createForumHandler, deleteForumHandler, getForumHandler, listAllDeletedForumsHandler, listAllForumsHandler, updateForumHandler } from '../../controllers/forum/forum.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
-import { upload } from '../../middlewares/uploadHandler.js';
+import { cache } from '../../middlewares/cacheMiddleware.js';
 
 const forumRoutes = router.Router();
 
@@ -19,11 +19,13 @@ const forumRoute = () => {
   forumRoutes.get(
     '/list-all-forums',
     authentication,
+    cache(60),
     listAllForumsHandler
   );
   forumRoutes.get(
     '/list-deleted-forums',
     authentication,
+    cache(60),
     listAllDeletedForumsHandler
   );
   forumRoutes.get(

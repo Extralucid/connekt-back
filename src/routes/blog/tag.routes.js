@@ -1,7 +1,7 @@
 import router from 'express';
 import { createTagHandler, deleteTagHandler, getTagHandler, listAllDeletedTagsHandler, listAllTagsHandler, updateTagHandler } from '../../controllers/blog/tag.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
-import { upload } from '../../middlewares/uploadHandler.js';
+import { cache } from '../../middlewares/cacheMiddleware.js';
 
 const tagRoutes = router.Router();
 
@@ -19,11 +19,13 @@ const tagRoute = () => {
   tagRoutes.get(
     '/list-all-tags',
     authentication,
+    cache(60),
     listAllTagsHandler
   );
   tagRoutes.get(
     '/list-deleted-tags',
     authentication,
+    cache(60),
     listAllDeletedTagsHandler
   );
   tagRoutes.get(

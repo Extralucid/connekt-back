@@ -1,4 +1,4 @@
-import redisClient from '../config/redis';
+import redisClient from '../config/redis.js';
 
 // Cache GET requests for a specified time (in seconds)
 export const cache = (expiryTime = 60) => async (req, res, next) => {

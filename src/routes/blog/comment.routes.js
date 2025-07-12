@@ -1,7 +1,7 @@
 import router from 'express';
 import { createCommentHandler, deleteCommentHandler, getCommentHandler, listAllDeletedCommentsHandler, listAllCommentsHandler, updateCommentHandler } from '../../controllers/blog/comment.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
-import { upload } from '../../middlewares/uploadHandler.js';
+import { cache } from '../../middlewares/cacheMiddleware.js';
 
 const commentRoutes = router.Router();
 
@@ -19,11 +19,13 @@ const commentRoute = () => {
   commentRoutes.get(
     '/list-all-comments',
     authentication,
+    cache(60),
     listAllCommentsHandler
   );
   commentRoutes.get(
     '/list-deleted-comments',
     authentication,
+    cache(60),
     listAllDeletedCommentsHandler
   );
   commentRoutes.get(

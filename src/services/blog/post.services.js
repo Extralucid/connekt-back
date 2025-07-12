@@ -28,7 +28,7 @@ export const deletePost = async ({ post_id }) => {
 }
 
 // Obtenir une post par ID
-export async function getPostById({post_id}) {
+export async function getPostById({ post_id }) {
     try {
 
         const post = await db.post.findUnique({
@@ -48,7 +48,18 @@ export async function getPostById({post_id}) {
 
 export const createPost = async ({ body, user }) => {
     try {
-        const createdpost = await db.post.create({ data: body });
+        const createdpost = await db.post.create({
+            data: {
+                ...body,
+                authorId: userId,
+                categories: body.categoryIds?.length ? {
+                    create: body.categoryIds.map((id) => ({ categoryId: id })),
+                } : undefined,
+                tags: body.tagIds?.length ? {
+                    create: body.tagIds.map((id) => ({ tagId: id })),
+                } : undefined,
+            },
+        });
         return createdpost;
     } catch (err) {
         throw new BadRequestError(err.message)
@@ -72,10 +83,11 @@ export const listPosts = async (page = 0,
         const posts = await db.post.findMany({
             where: {
                 OR: [
-                    { status: {not: null} },
+                    { status: { not: null } },
                     search ? { name: { contains: search, mode: "insensitive" } } : {},
                 ],
             },
+            include: { categories: { include: { category: true } }, tags: true },
             skip: Number(offset),
             take: Number(limit),
             orderBy: {
@@ -86,7 +98,7 @@ export const listPosts = async (page = 0,
         const countTotal = await db.post.count({
             where: {
                 OR: [
-                    { status: {not: null} },
+                    { status: { not: null } },
                     search ? { name: { contains: search, mode: "insensitive" } } : {},
                 ],
             },
@@ -121,10 +133,11 @@ export const listDeletedPosts = async (page = 0,
         const posts = await db.post.findMany({
             where: {
                 OR: [
-                    { status: {not: null} },
+                    { status: { not: null } },
                     search ? { name: { contains: search, mode: "insensitive" } } : {},
                 ],
             },
+            include: { categories: { include: { category: true } }, tags: true },
             skip: Number(offset),
             take: Number(limit),
             orderBy: {
@@ -135,7 +148,7 @@ export const listDeletedPosts = async (page = 0,
         const countTotal = await db.post.count({
             where: {
                 OR: [
-                    { status: {not: null} },
+                    { status: { not: null } },
                     search ? { name: { contains: search, mode: "insensitive" } } : {},
                 ],
             },
@@ -155,7 +168,7 @@ export const listDeletedPosts = async (page = 0,
 };
 
 // Mettre à jour une post
-export const updatePost = async ({ body, user,post_id }) => {
+export const updatePost = async ({ body, user, post_id }) => {
     try {
 
         const updatedpost = await db.post.update({

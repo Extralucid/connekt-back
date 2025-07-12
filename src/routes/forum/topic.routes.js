@@ -1,7 +1,7 @@
 import router from 'express';
 import { createTopicHandler, deleteTopicHandler, getTopicHandler, listAllDeletedTopicsHandler, listAllTopicsHandler, updateTopicHandler } from '../../controllers/forum/topic.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
-import { upload } from '../../middlewares/uploadHandler.js';
+import { cache } from '../../middlewares/cacheMiddleware.js';
 
 const topicRoutes = router.Router();
 
@@ -19,11 +19,13 @@ const topicRoute = () => {
   topicRoutes.get(
     '/list-all-topics',
     authentication,
+    cache(60),
     listAllTopicsHandler
   );
   topicRoutes.get(
     '/list-deleted-topics',
     authentication,
+    cache(60),
     listAllDeletedTopicsHandler
   );
   topicRoutes.get(

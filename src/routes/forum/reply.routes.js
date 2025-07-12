@@ -1,7 +1,7 @@
 import router from 'express';
 import { createReplyHandler, deleteReplyHandler, getReplyHandler, listAllDeletedReplysHandler, listAllReplysHandler, updateReplyHandler } from '../../controllers/forum/reply.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
-import { upload } from '../../middlewares/uploadHandler.js';
+import { cache } from '../../middlewares/cacheMiddleware.js';
 
 const replyRoutes = router.Router();
 
@@ -19,11 +19,13 @@ const replyRoute = () => {
   replyRoutes.get(
     '/list-all-replys',
     authentication,
+    cache(60),
     listAllReplysHandler
   );
   replyRoutes.get(
     '/list-deleted-replys',
     authentication,
+    cache(60),
     listAllDeletedReplysHandler
   );
   replyRoutes.get(
