@@ -8,6 +8,11 @@ import tagRoute from './blog/tag.routes.js';
 import postRoute from './blog/post.routes.js';
 import commentRoute from './blog/comment.routes.js';
 
+//forum
+import forumRoute from './forum/forum.routes.js';
+import topicRoute from './forum/topic.routes.js';
+import replyRoute from './forum/reply.routes.js';
+
 export default (router) => {
   router.use('/auth', authRoute());
   router.use('/user', userRoute());
@@ -19,5 +24,10 @@ export default (router) => {
   router.use('/tag', tagRoute());
   router.use('/post', postRoute());
   router.use('/comment', commentRoute());
+
+  //forum routes
+    router.use('/forum', forumRoute());
+    router.use('/topic', topicRoute());
+    router.use('/reply', replyRoute());
   return router;
 };
