@@ -1,6 +1,6 @@
 import router from 'express';
-import { createUserHandler, deleteUserHandler, getUserHandler, listAllDeletedUsersHandler, listAllUsersHandler,  updateUserHandler } from '../controllers/user.controllers.js';
-import { authentication } from '../middlewares/authentication.js';
+import { createUserHandler, deleteUserHandler, getUserHandler, listAllDeletedUsersHandler, listAllUsersHandler,  updateUserHandler } from '../../controllers/auth/user.controllers.js';
+import { authentication } from '../../middlewares/authentication.js';
 
 const userRoutes = router.Router();
 

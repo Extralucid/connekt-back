@@ -1,5 +1,5 @@
 import router from 'express';
-import { createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listAllDeletedDocumentsHandler, listAllDocumentsHandler, updateDocumentHandler } from '../../controllers/cotations/document.controller.js';
+import { createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listAllDeletedDocumentsHandler, listAllDocumentsHandler, updateDocumentHandler } from '../../controllers/auth/document.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
 import { upload } from '../../middlewares/uploadHandler.js';
 

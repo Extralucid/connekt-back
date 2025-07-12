@@ -1,5 +1,6 @@
 import RedisStore from 'rate-limit-redis';
 import { createClient } from 'redis';
+import rateLimit from 'express-rate-limit';
 
 // Initialize Redis client
 const redisClient = createClient({ url: process.env.REDIS_URL });

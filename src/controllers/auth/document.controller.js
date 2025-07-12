@@ -1,6 +1,6 @@
 import appResponse from '../../../lib/appResponse.js';
 
-import { createDocument, deleteDocument, getDocumentById, listDeletedDocuments, listDocuments, updateDocument } from '../../services/cotations/document.services.js';
+import { createDocument, deleteDocument, getDocumentById, listDeletedDocuments, listDocuments, updateDocument } from '../../services/auth/document.services.js';
 
 
 export const createDocumentHandler = async (req, res) => {

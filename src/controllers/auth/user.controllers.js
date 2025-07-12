@@ -1,7 +1,7 @@
-import appResponse from '../../lib/appResponse.js';
-import env from '../config/env.js';
+import appResponse from '../../../lib/appResponse.js';
+//import env from '../config/env.js';
 
-import { createUser, deleteUser, getUserById, listDeletedUsers, listUsers, updateUser } from '../services/auth/user.services.js';
+import { createUser, deleteUser, getUserById, listDeletedUsers, listUsers, updateUser } from '../../services/auth/user.services.js';
 
 
 export const createUserHandler = async (req, res) => {

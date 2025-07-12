@@ -1,7 +1,8 @@
 import router from 'express';
-//import { createRessourceHandler, deleteRessourceHandler, getRessourceHandler, listAllDeletedRessourcesHandler, listAllRessourcesHandler, profileDataHandler, refreshTokenHandler, revokeTokenHandler, signInMemberAuthenticationHandler, signUpMemberAuthenticationHandler, updateRessourceHandler } from '../controllers/auth.controller.js';
-import { authentication } from '../middlewares/authentication.js';
-import { registerSchema, loginSchema } from '../validators/auth.validator.js';
+import { profileDataHandler, refreshTokenHandler, revokeTokenHandler, signInMemberAuthenticationHandler, signUpMemberAuthenticationHandler } from '../../controllers/auth/auth.controller.js';
+import { authentication } from '../../middlewares/authentication.js';
+import { registerSchema, loginSchema } from '../../validators/auth/auth.validator.js';
+import { validateData } from '../../middlewares/validationMiddleware.js';
 
 const authRoutes = router.Router();
 
@@ -10,12 +11,12 @@ const authRoute = () => {
   //authentification
   authRoutes.post(
     '/signup',
-    registerSchema,
+    validateData(registerSchema),
     signUpMemberAuthenticationHandler
   );
   authRoutes.post(
     '/signin',
-    loginSchema,
+    validateData(loginSchema),
     signInMemberAuthenticationHandler
   );
   authRoutes.get(
