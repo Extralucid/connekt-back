@@ -32,7 +32,6 @@ export async function createDocumentData() {
     try {
 
         return {
-            cotations: await db.cotation.findMany({ where: { isDeleted: false } }),
             tdocuments: await db.tdocument.findMany({ where: { isDeleted: false } })
         };
     } catch (err) {
@@ -46,7 +45,6 @@ export async function updateDocumentData(iddocument) {
         const document = await db.document.findUnique({
             where: { iddocument: iddocument }, include: {
                 Tdocument: true,
-                Assure: true
             }
         }); // Utilise Prisma avec findUnique
 
@@ -56,7 +54,6 @@ export async function updateDocumentData(iddocument) {
 
         return {
             document: document,
-            cotations: await db.cotation.findMany({ where: { isDeleted: false } }),
             tdocuments: await db.tdocument.findMany({ where: { isDeleted: false } })
         };
     } catch (err) {
@@ -72,7 +69,6 @@ export async function getDocumentById(iddocument) {
             where: { iddocument: iddocument },
             include: {
                 Tdocument: true,
-                Assure: true
             }
         }); // Utilise Prisma avec findUnique
 
@@ -94,7 +90,6 @@ export const createDocument = async ({ body, user, file }) => {
         if (!file) {
             throw new BadRequestError("Document non trouvée");
         }
-        body.nomDocument = file.originalname;
         const createdDocument = await db.document.create({ data: body });
         return createdDocument;
     } catch (err) {
@@ -178,7 +173,6 @@ export const listDeletedDocuments = async (page = 0,
             },
             include: {
                 Tdocument: true,
-                Assure: true
             },
             skip: Number(offset),
             take: Number(limit),
@@ -211,55 +205,22 @@ export const listDeletedDocuments = async (page = 0,
 
 // Mettre à jour une document
 export const updateDocument = async ({ body, user, file, iddocument }) => {
-    const { 
-        descriptionDocument,
-        tdocId,
-        cotationId,
-        vehiculeId,
-        published } = body;
     try {
-        let cotation = await db.cotation.findFirst({ where: { idcotation: cotationId } });
 
-        if (!cotation) {
+        const updatedDocument = await db.document.update({
+            where: { iddocument }, // Utiliser l'ID pour le recherche
+            data: {
+                descriptionDocument: descriptionDocument,
+                tdocId: tdocId,
+                published: published
+            }
+        });
+        if (!updatedDocument) {
             throw new BadRequestError("Document non trouvée");
         }
-        if (file) {
-            let nomDocument = file.originalname;
-            const updatedDocument = await db.document.update({
-                where: { iddocument }, // Utiliser l'ID pour le recherche
-                data: {
-                    nomDocument: nomDocument,
-                    descriptionDocument: descriptionDocument,
-                    tdocId: tdocId,
-                    assureId: cotation.assureId,
-                    cotationId: cotationId,
-                    vehiculeId: vehiculeId,
-                    published: published
-                }
-            });
-            if (!updatedDocument) {
-                throw new BadRequestError("Document non trouvée");
-            }
-            return updatedDocument;
-        } else {
-            const updatedDocument = await db.document.update({
-                where: { iddocument }, // Utiliser l'ID pour le recherche
-                data: {
-                    descriptionDocument: descriptionDocument,
-                    tdocId: tdocId,
-                    assureId: cotation.assureId,
-                    cotationId: cotationId,
-                    vehiculeId: vehiculeId,
-                    published: published
-                }
-            });
-            if (!updatedDocument) {
-                throw new BadRequestError("Document non trouvée");
-            }
-            return updatedDocument;
-        }
+        return updatedDocument;
 
-        
+
     } catch (error) {
         console.log(error.message);
 

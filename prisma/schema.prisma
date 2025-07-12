@@ -176,9 +176,7 @@ model RefreshToken {
   isDeleted   Boolean  @default(false) @db.Boolean
 }
 
-/**
- * blog management models
- */
+//blog management models */
 
 model Post {
   post_id            String         @id @unique @default(uuid())
@@ -211,6 +209,7 @@ model Category {
   name         String         @db.VarChar(250)
   slug         String         @unique @db.VarChar(250)
   description  String?        @db.Text
+  isDeleted Boolean  @default(false) @db.Boolean
   PostCategory PostCategory[]
 
   @@map("categories")
@@ -220,6 +219,7 @@ model Tag {
   tag_id  String    @id @unique @default(uuid()) //(PK, Auto-increment)
   name    String    @db.VarChar(250)
   slug    String    @unique @db.VarChar(250)
+  isDeleted Boolean  @default(false) @db.Boolean
   PostTag PostTag[]
 
   @@map("tags")
@@ -263,9 +263,7 @@ model Comment {
   @@map("comments")
 }
 
-/**
- * Forum management
- */
+// Forum management */
 
 model Forum {
   forum_id      String  @id @unique @default(uuid()) //
@@ -277,6 +275,7 @@ model Forum {
   displayOrder  Int     @default(0)
   childForums   Forum[] @relation("ForumHierarchy")
   topics        Topic[]
+  isDeleted Boolean  @default(false) @db.Boolean
 
   @@map("forums")
 }
