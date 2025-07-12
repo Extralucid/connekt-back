@@ -54,9 +54,7 @@ export async function getUserById(id) {
         const user = await db.user.findUnique({
             where: { id: id },
             include: {
-                Prestataire: true,
-                Agence: true,
-                Ressource: true
+                Prestataire: true
             }
         }); // Utilise Prisma avec findUnique
 
@@ -88,9 +86,7 @@ export async function updateUserData(id) {
     try {
         const user = await db.user.findUnique({
             where: { id: id }, include: {
-                Prestataire: true,
-                Agence: true,
-                Ressource: true
+                Prestataire: true
             }
         }); // Utilise Prisma avec findUnique
 

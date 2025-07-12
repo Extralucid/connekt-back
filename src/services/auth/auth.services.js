@@ -25,7 +25,6 @@ export const getUserProfileData = async (userId) => {
             id: userId
         },
         include: {
-            Ressource: true,
             Prestataire: true
         }
     });
