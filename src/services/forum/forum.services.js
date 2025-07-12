@@ -7,6 +7,7 @@ import {
 } from '../../../lib/appErrors.js';
 import _ from "lodash";
 import { codeGenerator } from '../../utils/codeGenerator.js';
+import redisClient from '../../config/redis.js';
 
 // soft delete tokens after usage.
 export const deleteForum = async ({ forum_id }) => {
@@ -28,7 +29,7 @@ export const deleteForum = async ({ forum_id }) => {
 }
 
 // Obtenir une forum par ID
-export async function getForumById({forum_id}) {
+export async function getForumById({ forum_id }) {
     try {
 
         const forum = await db.forum.findUnique({
@@ -165,6 +166,9 @@ export const updateForum = async ({ body, user, forum_id }) => {
         if (!updatedforum) {
             throw new BadRequestError("forum non trouvée");
         }
+        // Clear cache for all post-related keys
+        const cacheKeys = await redisClient.keys('cache:/api/v1/youth/stag/forum*');
+        if (cacheKeys.length) await redisClient.del(cacheKeys);
         return updatedforum;
 
 

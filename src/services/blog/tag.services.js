@@ -7,6 +7,7 @@ import {
 } from '../../../lib/appErrors.js';
 import _ from "lodash";
 import { codeGenerator } from '../../utils/codeGenerator.js';
+import redisClient from '../../config/redis.js';
 
 // soft delete tokens after usage.
 export const deleteTag = async ({ tag_id }) => {
@@ -165,6 +166,10 @@ export const updateTag = async ({ body, user, file, tag_id }) => {
         if (!updatedtag) {
             throw new BadRequestError("tag non trouvée");
         }
+
+        // Clear cache for all post-related keys
+        const cacheKeys = await redisClient.keys('cache:/api/v1/youth/stag/tag*');
+        if (cacheKeys.length) await redisClient.del(cacheKeys);
         return updatedtag;
 
 

@@ -7,6 +7,7 @@ import {
 } from '../../../lib/appErrors.js';
 import _ from "lodash";
 import { codeGenerator } from '../../utils/codeGenerator.js';
+import redisClient from '../../config/redis.js';
 
 // soft delete tokens after usage.
 export const deleteTopic = async ({ topic_id }) => {
@@ -165,6 +166,10 @@ export const updateTopic = async ({ body, user, topic_id }) => {
         if (!updatedtopic) {
             throw new BadRequestError("topic non trouvée");
         }
+
+        // Clear cache for all post-related keys
+        const cacheKeys = await redisClient.keys('cache:/api/v1/youth/stag/topic*');
+        if (cacheKeys.length) await redisClient.del(cacheKeys);
         return updatedtopic;
 
 

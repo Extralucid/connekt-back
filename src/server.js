@@ -57,10 +57,10 @@ const port = env.port;
 
 if (env.node_env === 'production') {
   // routes
-  app.use('/api/v1/erp', rootRouter);
+  app.use('/api/v1/youth', rootRouter);
 } else {
   // routes
-  app.use('/api/v1/erp/stag', rootRouter);
+  app.use('/api/v1/youth/stag', rootRouter);
 }
 app.use(redisLimiter); // Use Redis-based limiter instead
 app.use('*', (req, res) => {
