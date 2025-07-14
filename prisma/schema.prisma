@@ -14,21 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Statut {
-  idstatut          String   @id @unique @default(uuid())
-  codestatut        String   @unique @db.VarChar(255)
-  nomstatut         String   @unique @db.VarChar(255)
-  descriptionstatut String?
-  published         Boolean? @default(true) @db.Boolean
-  isDeleted         Boolean? @default(false) @db.Boolean
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
-
-  Cotation Cotation[]
-
-  Prestataire Prestataire[]
-}
-
 model Profession {
   idprofession           String   @id @unique @default(uuid())
   codeprofession         String   @unique @db.VarChar(255)
@@ -38,55 +23,6 @@ model Profession {
   isDeleted              Boolean? @default(false) @db.Boolean
   created_at             DateTime @default(now())
   updated_at             DateTime @updatedAt
-
-  Assure Assure[]
-}
-
-model Qualite {
-  idqualite           String   @id @unique @default(uuid())
-  codequalite         String   @unique @db.VarChar(255)
-  libellequalite      String   @unique @db.VarChar(255)
-  descriptionsqualite String?
-  published           Boolean? @default(true) @db.Boolean
-  isDeleted           Boolean? @default(false) @db.Boolean
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
-
-  Assure Assure[]
-}
-
-model Activite {
-  idactivite          String   @id @unique @default(uuid())
-  codeactivite        String   @unique @db.VarChar(255)
-  dateactivite        DateTime @default(now())
-  descriptionactivite String?
-  published           Boolean? @default(true) @db.Boolean
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
-  isDeleted           Boolean? @default(false) @db.Boolean
-
-  Assure Assure[]
-}
-
-model Agence {
-  idagence          String   @id @unique @default(uuid())
-  nomagence         String   @unique @db.VarChar(255)
-  codeagence        String   @unique @db.VarChar(255)
-  responsableagence String?  @db.VarChar(255)
-  emailagence       String?  @db.VarChar(255)
-  siteagence        String?  @db.VarChar(255)
-  phoneagence       String?  @db.VarChar(255)
-  faxagence         String?  @db.VarChar(255)
-  longitudeagence   String?  @db.VarChar(255)
-  latitudeagence    String?  @db.VarChar(255)
-  descriptionagence String?
-  adresseagence     String?
-  published         Boolean? @default(true) @db.Boolean
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
-  isDeleted         Boolean? @default(false) @db.Boolean
-
-  User User[]
 }
 
 model Prestataire {
@@ -106,240 +42,8 @@ model Prestataire {
   isDeleted              Boolean? @default(false) @db.Boolean
   created_at             DateTime @default(now())
   updated_at             DateTime @updatedAt
-  statutId               String
-  Statut                 Statut   @relation(fields: [statutId], references: [idstatut], onDelete: Cascade, onUpdate: NoAction)
 
   User User[]
-
-  Cotation Cotation[]
-}
-
-model Assure {
-  idassure          String     @id @unique @default(uuid())
-  codeassure        String     @unique @db.VarChar(255)
-  nomassure         String     @db.VarChar(255)
-  prenomassure      String?    @db.VarChar(255)
-  emailassure       String?    @db.VarChar(255)
-  siteassure        String?    @db.VarChar(255)
-  phoneassure       String?    @db.VarChar(255)
-  gsmassure         String?    @db.VarChar(255)
-  faxassure         String?    @db.VarChar(255)
-  descriptionassure String?
-  adresseassure     String?
-  activiteId        String
-  Activite          Activite   @relation(fields: [activiteId], references: [idactivite], onDelete: Cascade, onUpdate: NoAction)
-  qualiteId         String
-  Qualite           Qualite    @relation(fields: [qualiteId], references: [idqualite], onDelete: Cascade, onUpdate: NoAction)
-  professionId      String
-  Profession        Profession @relation(fields: [professionId], references: [idprofession], onDelete: Cascade, onUpdate: NoAction)
-  published         Boolean?   @default(true) @db.Boolean
-  isDeleted         Boolean?   @default(false) @db.Boolean
-  created_at        DateTime   @default(now())
-  updated_at        DateTime   @updatedAt
-
-  Cotation Cotation[]
-
-  Document Document[]
-}
-
-model Energie {
-  idenergie          String     @id @unique @default(uuid())
-  codeenergie        String     @unique @db.VarChar(255)
-  nomenergie         String     @unique @db.VarChar(255)
-  descriptionenergie String?
-  published          Boolean?   @default(true) @db.Boolean
-  isDeleted          Boolean?   @default(false) @db.Boolean
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  Vehicule           Vehicule[]
-}
-
-model Marque {
-  idmarque          String     @id @unique @default(uuid())
-  codemarque        String     @unique @db.VarChar(255)
-  nommarque         String     @unique @db.VarChar(255)
-  descriptionmarque String?
-  published         Boolean?   @default(true) @db.Boolean
-  isDeleted         Boolean?   @default(false) @db.Boolean
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-  Vehicule          Vehicule[]
-
-  Modele Modele[]
-}
-
-model Modele {
-  idmodele          String     @id @unique @default(uuid())
-  codemodele        String     @unique @db.VarChar(255)
-  nommodele         String     @unique @db.VarChar(255)
-  descriptionmodele String?
-  published         Boolean?   @default(true) @db.Boolean
-  isDeleted         Boolean?   @default(false) @db.Boolean
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-  marqueId          String
-  Marque            Marque     @relation(fields: [marqueId], references: [idmarque], onDelete: Cascade, onUpdate: NoAction)
-  Vehicule          Vehicule[]
-}
-
-model Tpuissance {
-  idpuissance    String   @id @unique @default(uuid())
-  codepuissance  String   @unique @db.VarChar(255)
-  nompuissance   String   @db.VarChar(255)
-  puissance_from Int?     @db.Integer
-  puissance_to   Int?     @db.Integer
-  descriptionpuissance String?
-  published      Boolean? @default(true) @db.Boolean
-  isDeleted      Boolean? @default(false) @db.Boolean
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  Prime    Prime[]
-  Vehicule Vehicule[]
-}
-
-model Tdocument {
-  idtdoc          String   @id @unique @default(uuid())
-  codetdoc        String   @unique @db.VarChar(255)
-  nomtdoc         String   @db.VarChar(255)
-  descriptiontdoc String?
-  published       Boolean? @default(true) @db.Boolean
-  isDeleted       Boolean? @default(false) @db.Boolean
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  PackTdoc PackTdoc[]
-
-  Document Document[]
-}
-
-model Garantie {
-  idgarantie          String   @id @unique @default(uuid())
-  codegarantie        String   @unique @db.VarChar(255)
-  nomgarantie         String   @db.VarChar(255)
-  photogarantie       String?  @unique @db.VarChar(255)
-  descriptiongarantie String?
-  published           Boolean? @default(true) @db.Boolean
-  isDeleted           Boolean? @default(false) @db.Boolean
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  PackGarantie PackGarantie[]
-
-  CotationGarantie CotationGarantie[]
-}
-
-model GarantiePT {
-  idgarantiept          String   @id @unique @default(uuid())
-  codegarantiept        String   @unique @db.VarChar(255)
-  nomgarantiept         String   @db.VarChar(255)
-  photogarantiept       String?  @unique @db.VarChar(255)
-  descriptiongarantiept String?
-  published             Boolean? @default(true) @db.Boolean
-  isDeleted             Boolean? @default(false) @db.Boolean
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  FormulePtGarantiePt FormulePtGarantiePt[]
-}
-
-model FormulePT {
-  idformulept          String   @id @unique @default(uuid())
-  codeformulept        String   @unique @db.VarChar(255)
-  nomformulept         String   @db.VarChar(255)
-  photoformulept       String?  @unique @db.VarChar(255)
-  montantformulept     Int?     @db.Integer
-  descriptionformulept String?
-  published            Boolean? @default(true) @db.Boolean
-  isDeleted            Boolean? @default(false) @db.Boolean
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  FormulePtGarantiePt FormulePtGarantiePt[]
-}
-
-model FormulePtGarantiePt {
-  idfg         String     @id @unique @default(uuid())
-  isActive     Boolean    @default(true)
-  garantiePtId String
-  GarantiePt   GarantiePT @relation(fields: [garantiePtId], references: [idgarantiept], onDelete: Cascade, onUpdate: NoAction)
-  formulePtId  String
-  FormulePt    FormulePT  @relation(fields: [formulePtId], references: [idformulept], onDelete: NoAction, onUpdate: NoAction)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-}
-
-model Pack {
-  idpack          String   @id @unique @default(uuid())
-  codepack        String   @unique @db.VarChar(255)
-  nompack         String   @db.VarChar(255)
-  photopack       String?  @unique @db.VarChar(255)
-  ordrepack       Int?     @db.Integer
-  descriptionpack String?
-  withPT          Boolean? @default(false) @db.Boolean
-  cpEqVv          Boolean? @default(false) @db.Boolean
-  published       Boolean? @default(true) @db.Boolean
-  isDeleted       Boolean? @default(false) @db.Boolean
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  PackGarantie PackGarantie[]
-
-  PackTdoc PackTdoc[]
-
-  PackTage PackTage[]
-
-  Prime Prime[]
-}
-
-model PackGarantie {
-  idpg       String   @id @unique @default(uuid())
-  isActive   Boolean  @default(true) @db.Boolean
-  garantieId String
-  Garantie   Garantie @relation(fields: [garantieId], references: [idgarantie], onDelete: Cascade, onUpdate: NoAction)
-  packId     String
-  Pack       Pack     @relation(fields: [packId], references: [idpack], onDelete: NoAction, onUpdate: NoAction)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
-
-model PackTdoc {
-  idpt      String    @id @unique @default(uuid())
-  isActive  Boolean   @default(true) @db.Boolean
-  tdocId    String
-  Tdoc      Tdocument @relation(fields: [tdocId], references: [idtdoc], onDelete: Cascade, onUpdate: NoAction)
-  packId    String
-  Pack      Pack      @relation(fields: [packId], references: [idpack], onDelete: NoAction, onUpdate: NoAction)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model Tage {
-  idtage          String   @id @unique @default(uuid())
-  codetage        String   @unique @db.VarChar(255)
-  nomtage         String   @db.VarChar(255)
-  age_from        Int?     @db.Integer
-  age_to          Int?     @db.Integer
-  descriptiontage String?
-  published       Boolean? @default(true) @db.Boolean
-  isDeleted       Boolean? @default(false) @db.Boolean
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  PackTage PackTage[]
-
-  Prime Prime[]
-}
-
-model PackTage {
-  idpa      String   @id @unique @default(uuid())
-  isActive  Boolean  @default(true) @db.Boolean
-  tageId    String
-  Tage      Tage     @relation(fields: [tageId], references: [idtage], onDelete: Cascade, onUpdate: NoAction)
-  packId    String
-  Pack      Pack     @relation(fields: [packId], references: [idpack], onDelete: NoAction, onUpdate: NoAction)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model MethodePaiement {
@@ -389,116 +93,92 @@ model PasswordReset {
   updatedAt DateTime @updatedAt
 }
 
-model Franchise {
-  idfranchise          String   @id @unique @default(uuid())
-  codefranchise        String   @unique @db.VarChar(255)
-  nomafranchise        String?  @db.VarChar(255)
-  valeurafranchise     Int?     @db.Integer
-  descriptionfranchise String?
-  published            Boolean? @default(true) @db.Boolean
-  isDeleted            Boolean? @default(false) @db.Boolean
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  Prime Prime[]
-}
-
-model Capitaux {
-  idcapitaux          String   @id @unique @default(uuid())
-  nomcapitaux         String   @unique @db.VarChar(255)
-  codecapitaux        String   @unique @db.VarChar(255)
-  valeurcapitaux      Int?     @db.Integer
-  descriptioncapitaux String?
-  published           Boolean? @default(true) @db.Boolean
-  isDeleted           Boolean? @default(false) @db.Boolean
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  Prime Prime[]
-}
-
-model Prime {
-  idprime     String     @id @unique @default(uuid())
-  nomprime    String     @unique @db.VarChar(255)
-  codeprime   String     @unique @db.VarChar(255)
-  valeurprime Int?       @db.Integer
-  tageId      String
-  Tage        Tage       @relation(fields: [tageId], references: [idtage], onDelete: Cascade, onUpdate: NoAction)
-  packId      String
-  Pack        Pack       @relation(fields: [packId], references: [idpack], onDelete: NoAction, onUpdate: NoAction)
-  puissId     String
-  Tpuissance  Tpuissance @relation(fields: [puissId], references: [idpuissance], onDelete: NoAction, onUpdate: NoAction)
-  capitauxId  String
-  Capitaux    Capitaux   @relation(fields: [capitauxId], references: [idcapitaux], onDelete: NoAction, onUpdate: NoAction)
-  franchiseId String
-  Franchise   Franchise  @relation(fields: [franchiseId], references: [idfranchise], onDelete: NoAction, onUpdate: NoAction)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  published Boolean? @default(true) @db.Boolean
-  isDeleted Boolean? @default(false) @db.Boolean
-
-  Cotation Cotation[]
-}
-
-model Ressource {
-  idressource          String   @id @unique @default(uuid())
-  rcode                String
-  nomressource         String?
-  descriptionressource String?
-  published            Boolean  @default(true) @db.Boolean
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  User                 User[]
-  isDeleted            Boolean  @default(false) @db.Boolean
+enum Role {
+  ADMIN
+  MODERATOR
+  USER
+  EMPLOYER // New role for job posters
 }
 
 model User {
-  id                String         @id @unique @default(uuid())
-  email             String         @unique @db.VarChar(255)
-  phone             String         @unique @db.VarChar(255)
-  password          String
-  codeuser          String         @db.VarChar(250)
-  unom              String?        @db.VarChar(250)
-  uprenom           String?        @db.VarChar(250)
-  email_verified_at DateTime?      @db.Date
-  avatar            String?        @db.VarChar(250)
-  usession          String?        @db.VarChar(250)
-  ressourceId       String?
-  Ressource         Ressource?     @relation(fields: [ressourceId], references: [idressource], onDelete: NoAction)
-  prestataireId     String?
-  Prestataire       Prestataire?   @relation(fields: [prestataireId], references: [idprestataire], onDelete: NoAction)
-  agenceId          String?
-  Agence            Agence?        @relation(fields: [agenceId], references: [idagence], onDelete: NoAction, onUpdate: NoAction)
-  refreshTokens     RefreshToken[]
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  isDeleted         Boolean?       @default(false) @db.Boolean
-  published         Boolean?       @default(true) @db.Boolean
+  id                  String         @id @unique @default(uuid())
+  email               String         @unique @db.VarChar(255)
+  phone               String         @unique @db.VarChar(255)
+  pwd_hash            String
+  codeuser            String         @db.VarChar(250)
+  unom                String?        @db.VarChar(250)
+  uprenom             String?        @db.VarChar(250)
+  password_hash       String?        @db.VarChar(250)
+  display_name        String?        @db.VarChar(250)
+  registration_date   DateTime?      @db.Date
+  last_login          DateTime?      @db.Date
+  is_banned           Boolean        @default(false) @db.Boolean
+  profile_picture_url String?        @db.VarChar(250)
+  bio                 String?        @db.Text
+  email_verified_at   DateTime?      @db.Date
+  avatar              String?        @db.VarChar(250)
+  usession            String?        @db.VarChar(250)
+  prestataireId       String?
+  Prestataire         Prestataire?   @relation(fields: [prestataireId], references: [idprestataire], onDelete: NoAction)
+  refreshTokens       RefreshToken[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  isDeleted           Boolean?       @default(false) @db.Boolean
 
   Document Document[]
+
+  posts         Post[]
+  comments      Comment[]
+  topics        Topic[]
+  replies       Reply[]
+  votes         Vote[]
+  notifications Notification[]
+  Job           Job[]
+  Bookmark      Bookmark[]
+
+  jobAlerts       JobAlert[]
+  reviews         CompanyReview[]   @relation(name: "utilisateur")
+  applications    Application[]
+  viewedJobs      JobView[]
+  companyReview   CompanyReview[]   @relation(name: "employeur")
+  ChatParticipant ChatParticipant[]
+  ChatMessage     ChatMessage[]
+
+  @@map("users")
+}
+
+model Tdocument {
+  idtdoc          String   @id @unique @default(uuid())
+  nomtdoc         String   @db.VarChar(255)
+  descriptiontdoc String?
+  published       Boolean? @default(true) @db.Boolean
+  isDeleted       Boolean? @default(false) @db.Boolean
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  Document Document[]
+
+  @@map("tdocuments")
 }
 
 model Document {
-  iddocument          String    @id @unique @default(uuid())
-  nomDocument         String?   @db.VarChar(255)
-  codeDocument        String    @unique @db.VarChar(255)
-  descriptionDocument String?
-  published           Boolean?  @default(true) @db.Boolean
-  imported            Boolean?  @default(false) @db.Boolean
-  isDeleted           Boolean?  @default(false) @db.Boolean
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  tdocId              String
-  Tdocument           Tdocument @relation(fields: [tdocId], references: [idtdoc], onDelete: Cascade, onUpdate: NoAction)
-  assureId            String
-  Assure              Assure    @relation(fields: [assureId], references: [idassure], onDelete: Cascade, onUpdate: NoAction)
-  cotationId          String
-  Cotataion           Cotation  @relation(fields: [cotationId], references: [idcotation], onDelete: Cascade, onUpdate: NoAction)
-  vehiculeId          String
-  Vehicule            Vehicule  @relation(fields: [vehiculeId], references: [idvehicule], onDelete: Cascade, onUpdate: NoAction)
-  userId              String?
-  User                User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  iddocument  String   @id @unique @default(uuid())
+  nomDocument String?  @db.VarChar(255)
+  description String?
+  fileUrl     String   @db.VarChar(255) // PDF stored in S3/Cloud Storage
+  published   Boolean? @default(true) @db.Boolean
+  isDeleted   Boolean? @default(false) @db.Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tdocId      String
+
+  Tdocument Tdocument @relation(fields: [tdocId], references: [idtdoc], onDelete: Cascade, onUpdate: NoAction)
+  userId    String?
+  User      User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  applications ApplicationDoc[]
+
+  @@map("documents")
 }
 
 model RefreshToken {
@@ -512,79 +192,412 @@ model RefreshToken {
   isDeleted   Boolean  @default(false) @db.Boolean
 }
 
-model Vehicule {
-  idvehicule          String     @id @unique @default(uuid())
-  codevehicule        String     @db.VarChar(255)
-  dateMiseCirdulation DateTime?  @db.Date
-  valeurNeuve         Int?       @db.Integer
-  valeurvenale        Int?       @db.Integer
-  typeTransport       String     @db.VarChar(255)
-  nbPlace             Int?       @db.Integer
-  nbPlaceAssure       Int?       @db.Integer
-  nbPlaceSupprime     Int?       @db.Integer
-  immatriculation     String     @db.VarChar(255)
-  marqueId            String
-  Marque              Marque     @relation(fields: [marqueId], references: [idmarque], onDelete: Cascade, onUpdate: NoAction)
-  modeleId            String
-  Modele              Modele     @relation(fields: [modeleId], references: [idmodele], onDelete: Cascade, onUpdate: NoAction)
-  energieId           String
-  Energie             Energie    @relation(fields: [energieId], references: [idenergie], onDelete: Cascade, onUpdate: NoAction)
-  puissanceId         String
-  Puissance           Tpuissance @relation(fields: [puissanceId], references: [idpuissance], onDelete: Cascade, onUpdate: NoAction)
-  cotationId          String
-  Cotation            Cotation   @relation(fields: [cotationId], references: [idcotation], onDelete: Cascade, onUpdate: NoAction)
-  descriptionVehicule String?
-  photo1              String?    @db.VarChar(255)
-  photo2              String?    @db.VarChar(255)
-  photo3              String?    @db.VarChar(255)
-  photo4              String?    @db.VarChar(255)
-  published           Boolean?   @default(true) @db.Boolean
-  isDeleted           Boolean?   @default(false) @db.Boolean
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+//blog management models */
 
-  Document Document[]
+model Post {
+  post_id            String         @id @unique @default(uuid())
+  authorId           String
+  author             User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title              String         @db.VarChar(250)
+  slug               String         @unique @db.VarChar(250) //(Unique, SEO-friendly URL)
+  content            String         @db.Text
+  excerpt            String?        @db.VarChar(250) //(Short summary)
+  status             PostStatus     @default(DRAFT) //(Enum: "draft", "published", "archived")
+  published_date     DateTime?      @db.Date
+  updated_date       DateTime?      @updatedAt @db.Date
+  featured_image_url String?        @db.VarChar(250) //
+  view_count         Int?           @default(0)
+  Comment            Comment[]
+  categories         PostCategory[]
+  tags               PostTag[]
+
+  @@map("posts")
 }
 
-model Cotation {
-  idcotation           String      @id @unique @default(uuid())
-  codecotation         String      @unique @db.VarChar(255)
-  typecotation         String      @db.VarChar(255)
-  dureMois             Int?        @db.Integer
-  dureeJours           Int?        @db.Integer
-  dateEffet            DateTime?   @db.Date
-  dateEcheance         DateTime?   @db.Date
-  reductionBNS         Float?      @db.Real
-  reductionCommerciale Float?      @db.Real
-  descriptioncotation  String?
-  lieuCotation         String?
-  assureId             String
-  Assure               Assure      @relation(fields: [assureId], references: [idassure], onDelete: Cascade, onUpdate: NoAction)
-  statutId             String
-  Statut               Statut      @relation(fields: [statutId], references: [idstatut], onDelete: Cascade, onUpdate: NoAction)
-  prestataireId        String
-  Prestataire          Prestataire @relation(fields: [prestataireId], references: [idprestataire], onDelete: Cascade, onUpdate: NoAction)
-  primeId              String
-  Prime                Prime       @relation(fields: [primeId], references: [idprime], onDelete: Cascade, onUpdate: NoAction)
-  published            Boolean?    @default(true) @db.Boolean
-  isDeleted            Boolean?    @default(false) @db.Boolean
-  created_at           DateTime    @default(now())
-  updated_at           DateTime    @updatedAt
-
-  Vehicule Vehicule[]
-
-  CotationGarantie CotationGarantie[]
-
-  Document Document[]
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }
 
-model CotationGarantie {
-  idcg       String   @id @unique @default(uuid())
-  isActive   Boolean  @default(true) @db.Boolean
-  garantieId String
-  Garantie   Garantie @relation(fields: [garantieId], references: [idgarantie], onDelete: Cascade, onUpdate: NoAction)
-  cotationId String
-  Cotation   Cotation @relation(fields: [cotationId], references: [idcotation], onDelete: NoAction, onUpdate: NoAction)
+model Category {
+  category_id  String         @id @unique @default(uuid()) //(PK, Auto-increment)
+  name         String         @db.VarChar(250)
+  slug         String         @unique @db.VarChar(250)
+  description  String?        @db.Text
+  isDeleted    Boolean        @default(false) @db.Boolean
+  PostCategory PostCategory[]
+
+  @@map("categories")
+}
+
+model Tag {
+  tag_id    String    @id @unique @default(uuid()) //(PK, Auto-increment)
+  name      String    @db.VarChar(250)
+  slug      String    @unique @db.VarChar(250)
+  isDeleted Boolean   @default(false) @db.Boolean
+  PostTag   PostTag[]
+
+  @@map("tags")
+}
+
+// Junction tables (Many-to-Many)
+model PostCategory {
+  post       Post     @relation(fields: [postId], references: [post_id])
+  postId     String
+  category   Category @relation(fields: [categoryId], references: [category_id])
+  categoryId String
+
+  @@id([postId, categoryId])
+  @@map("post_categories")
+}
+
+model PostTag {
+  post   Post   @relation(fields: [postId], references: [post_id])
+  postId String
+  tag    Tag    @relation(fields: [tagId], references: [tag_id])
+  tagId  String
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+model Comment {
+  comment_id   String   @id @unique @default(uuid()) //(PK, Auto-increment)
+  post         Post     @relation(fields: [postId], references: [post_id])
+  postId       String
+  authorId     String
+  author       User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content      String   @db.Text
+  created_date DateTime @default(now())
+  isApproved   Boolean  @default(true)
+
+  parentComment   Comment?  @relation("CommentHierarchy", fields: [parentCommentId], references: [comment_id])
+  parentCommentId String?
+  childComments   Comment[] @relation("CommentHierarchy")
+
+  @@map("comments")
+}
+
+// Forum management */
+
+model Forum {
+  forum_id      String  @id @unique @default(uuid()) //
+  name          String  @db.VarChar(250)
+  slug          String  @unique @db.VarChar(250)
+  description   String  @db.Text
+  parentForum   Forum?  @relation("ForumHierarchy", fields: [parentForumId], references: [forum_id])
+  parentForumId String?
+  displayOrder  Int     @default(0)
+  childForums   Forum[] @relation("ForumHierarchy")
+  topics        Topic[]
+  isDeleted     Boolean @default(false) @db.Boolean
+
+  @@map("forums")
+}
+
+model Topic {
+  topic_id     String      @id @unique @default(uuid()) // (PK, Auto-increment)
+  forum        Forum       @relation(fields: [forumId], references: [forum_id])
+  forumId      String
+  authorId     String
+  author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title        String      @db.VarChar(250)
+  slug         String      @unique @db.VarChar(250)
+  content      String      @db.Text
+  status       TopicStatus @default(OPEN) //(Enum: "open", "closed", "pinned", "archived")
+  created_date DateTime    @default(now())
+  updated_date DateTime    @updatedAt
+  view_count   Int?        @default(0)
+  replies      Reply[]
+
+  @@map("topics")
+}
+
+enum TopicStatus {
+  OPEN
+  CLOSED
+  PINNED
+  ARCHIVED
+}
+
+model Reply {
+  reply_id         String   @id @unique @default(uuid()) // (PK, Auto-increment)
+  topic            Topic    @relation(fields: [topicId], references: [topic_id])
+  topicId          String
+  authorId         String
+  author           User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content          String   @db.Text
+  created_date     DateTime @default(now())
+  updated_date     DateTime @updatedAt
+  isAcceptedAnswer Boolean  @default(false) @db.Boolean
+  votes            Vote[]
+
+  @@map("replies")
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}
+
+model Vote {
+  vote_id String   @id @unique @default(uuid())
+  reply   Reply    @relation(fields: [replyId], references: [reply_id])
+  replyId String
+  user    User     @relation(fields: [userId], references: [id])
+  userId  String
+  type    VoteType //(Enum: "upvote", "downvote")
+
+  @@unique([replyId, userId]) // Prevent duplicate votes
+  @@map("votes")
+}
+
+//Notifications
+
+model Notification {
+  notification_id String     @id @unique @default(uuid())
+  user            User       @relation(fields: [userId], references: [id])
+  userId          String
+  message         String     @db.Text
+  isRead          Boolean    @default(false) @db.Boolean
+  created_date    DateTime   @default(now())
+  sourceType      SourceType
+  sourceId        Int
+
+  @@map("notifications")
+}
+
+enum SourceType {
+  POST
+  TOPIC
+  REPLY
+  COMMENT
+}
+
+//jobs model
+model Job {
+  job_id         String        @id @unique @default(uuid())
+  title          String        @db.Text
+  description    String        @db.Text
+  jobType        JobType       @default(FULL_TIME)
+  location       String?       @db.VarChar(250)
+  remote         Boolean       @default(false)
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String?       @default("USD")
+  expiryDate     DateTime? // Job post expiry
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  employerId     String // Who posted the job
+  employer       User          @relation(fields: [employerId], references: [id])
+  applications   Application[]
+  categories     JobCategory[]
+  skills         JobSkill[]
+  Bookmark       Bookmark[]
+  JobView        JobView[]
+
+  @@map("jobs")
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+model Categorie {
+  cat_id              String        @id @unique @default(uuid())
+  name                String        @db.VarChar(250)
+  slug                String        @unique
+  jobs                JobCategory[]
+  JobAlert            JobAlert?     @relation(fields: [jobAlertJobalert_id], references: [jobalert_id])
+  jobAlertJobalert_id String?
+  isDeleted           Boolean       @default(false) @db.Boolean
+
+  @@map("job_categories")
+}
+
+model Skill {
+  skill_id  String     @id @unique @default(uuid())
+  name      String     @db.VarChar(250)
+  slug      String     @unique
+  isDeleted Boolean    @default(false) @db.Boolean
+  jobs      JobSkill[]
+
+  @@map("skills")
+}
+
+// Junction tables
+model JobCategory {
+  job         Job       @relation(fields: [jobId], references: [job_id])
+  jobId       String
+  categorie   Categorie @relation(fields: [categorieId], references: [cat_id])
+  categorieId String
+
+  @@unique([jobId, categorieId]) // Prevent duplicate votes
+  @@map("job_categories_data")
+}
+
+model JobSkill {
+  job     Job    @relation(fields: [jobId], references: [job_id])
+  jobId   String
+  skill   Skill  @relation(fields: [skillId], references: [skill_id])
+  skillId String
+
+  @@id([jobId, skillId])
+  @@map("job_skills")
+}
+
+model Application {
+  app_id           String             @id @unique @default(uuid())
+  coverLetter      String?            @db.Text
+  status           AppStatus          @default(PENDING)
+  createdAt        DateTime           @default(now())
+  jobId            String
+  job              Job                @relation(fields: [jobId], references: [job_id])
+  userId           String // Applicant
+  user             User               @relation(fields: [userId], references: [id])
+  documents        ApplicationDoc[]
+  ApplicationEvent ApplicationEvent[]
+
+  @@map("applications")
+}
+
+enum AppStatus {
+  PENDING
+  REVIEWED
+  REJECTED
+  INTERVIEW
+  HIRED
+}
+
+// Junction tables
+model ApplicationDoc {
+  application Application @relation(fields: [appId], references: [app_id])
+  appId       String
+  document    Document    @relation(fields: [docId], references: [iddocument])
+  docId       String
+
+  @@id([appId, docId])
+  @@map("application_documents")
+}
+
+model Bookmark {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  jobId  String
+  job    Job    @relation(fields: [jobId], references: [job_id])
+
+  @@unique([userId, jobId])
+}
+
+//job alert tracking
+model JobAlert {
+  jobalert_id String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  keywords    String[] // e.g., ["React", "Remote"]
+  categories  Categorie[] // Optional: Alerts by category
+  frequency   AlertFrequency @default(DAILY)
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+
+  @@map("job_alerts")
+}
+
+enum AlertFrequency {
+  INSTANT // Notify immediately
+  DAILY
+  WEEKLY
+}
+
+model CompanyReview {
+  review_id  String   @id @default(uuid())
+  rating     Int      @db.Integer // 1-5 stars
+  title      String   @db.VarChar(250)
+  review     String   @db.VarChar(250)
+  pros       String[] // e.g., ["Great culture", "Flexible hours"]
+  cons       String[] // e.g., ["Low pay", "Slow growth"]
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], name: "utilisateur")
+  employerId String
+  employer   User     @relation(fields: [employerId], references: [id], name: "employeur")
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isApproved Boolean  @default(false) // Moderation
+
+  @@map("company_reviews")
+}
+
+model ApplicationEvent {
+  app_event_id  String       @id @default(uuid())
+  applicationId String
+  application   Application  @relation(fields: [applicationId], references: [app_id])
+  type          AppEventType
+  message       String? // e.g., "Interview on Jan 30"
+  createdBy     String // User ID (employer/admin)
+  createdAt     DateTime     @default(now())
+
+  @@map("application_events")
+}
+
+enum AppEventType {
+  STATUS_CHANGE
+  INTERVIEW
+  NOTE // Internal comments
+  EMAIL_SENT
+}
+
+model JobView {
+  job_view_id String   @id @default(uuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [job_id])
+  userId      String? // Null if anonymous
+  user        User?    @relation(fields: [userId], references: [id])
+  viewedAt    DateTime @default(now())
+  ipAddress   String? // For analytics
+
+  @@map("job_views")
+}
+
+// Chat Rooms (1:1 or Group)
+model ChatRoom {
+  room_id      String            @id @default(uuid())
+  name         String? // Group name (nullable for 1:1 chats)
+  isGroup      Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+
+  @@map("rooms")
+}
+
+// Track who's in which chat
+model ChatParticipant {
+  participant_id String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  roomId         String
+  room           ChatRoom @relation(fields: [roomId], references: [room_id])
+  isAdmin   Boolean  @default(false) // New field
+  joinedAt       DateTime @default(now())
+
+  @@unique([userId, roomId]) // Prevent duplicates
+  @@map("chat_participants")
+}
+
+// Chat Messages
+model ChatMessage {
+  message_id String   @id @default(uuid())
+  content    String
+  roomId     String
+  room       ChatRoom @relation(fields: [roomId], references: [room_id])
+  senderId   String
+  sender     User     @relation(fields: [senderId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@map("messages")
 }

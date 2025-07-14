@@ -1,5 +1,6 @@
 import appResponse from '../../lib/appResponse.js';
-import { PrismaClient, Prisma } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client';
+import { z } from 'zod';
 
 const prismaValidationError = Prisma.PrismaClientKnownRequestError
 const isProduction = process.env.NODE_ENV === 'production';
@@ -16,6 +17,10 @@ const errorNames = [
 export const ErrorHandler = function (error, req, res, next) {
   if (error.name === 'APIERRORS' || error.isOperational) {
     return res.status(error.statusCode).send(appResponse(error.message, null, false));
+  }
+
+  if (err instanceof z.ZodError) {
+    return res.status(400).json({ errors: err.errors });
   }
 
   if (error instanceof prismaValidationError) {

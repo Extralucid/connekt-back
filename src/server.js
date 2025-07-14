@@ -15,6 +15,7 @@ import { ErrorHandler } from './middlewares/errorHandler.js';
 import swaggerUi from 'swagger-ui-express';
 //import { apiDocumentation } from './docs/apidocs.js';
 import { createKeys } from './utils/vault.js';
+import { redisLimiter } from './middlewares/redisRateLimiter.js';
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
 
@@ -56,12 +57,12 @@ const port = env.port;
 
 if (env.node_env === 'production') {
   // routes
-  app.use('/api/v1/erp', rootRouter);
+  app.use('/api/v1/youth', rootRouter);
 } else {
   // routes
-  app.use('/api/v1/erp/stag', rootRouter);
+  app.use('/api/v1/youth/stag', rootRouter);
 }
-
+app.use(redisLimiter); // Use Redis-based limiter instead
 app.use('*', (req, res) => {
   res.status(404).send({ message: 'Resource URL not found', success: false, data: null });
 });
