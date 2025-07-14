@@ -136,15 +136,19 @@ model User {
   Job           Job[]
   Bookmark      Bookmark[]
 
-  jobAlerts       JobAlert[]
-  reviews         CompanyReview[]   @relation(name: "utilisateur")
-  applications    Application[]
-  viewedJobs      JobView[]
-  companyReview   CompanyReview[]   @relation(name: "employeur")
-  ChatParticipant ChatParticipant[]
-  ChatMessage     ChatMessage[]
-  ChatInvite      ChatInvite[]
-  ChatAuditLog    ChatAuditLog[]
+  jobAlerts           JobAlert[]
+  reviews             CompanyReview[]       @relation(name: "utilisateur")
+  applications        Application[]
+  viewedJobs          JobView[]
+  companyReview       CompanyReview[]       @relation(name: "employeur")
+  ChatParticipant     ChatParticipant[]
+  ChatMessage         ChatMessage[]
+  ChatInvite          ChatInvite[]
+  ChatAuditLog        ChatAuditLog[]
+  Podcast             Podcast[]
+  Listen              Listen[]
+  PodcastSubscription PodcastSubscription[]
+  PodcastComment      PodcastComment[]
 
   @@map("users")
 }
@@ -641,4 +645,90 @@ model ChatAuditLog {
   targetId  String? // Affected user (if applicable)
   metadata  Json? // Additional context (e.g., { oldRole: "MEMBER", newRole: "MODERATOR" })
   createdAt DateTime @default(now())
+
+  @@map("chat_audits")
+}
+
+//podcast feature
+model Podcast {
+  podcast_id  String                @id @default(uuid())
+  title       String
+  description String
+  coverImage  String? // URL to cover art
+  author      User                  @relation(fields: [authorId], references: [id])
+  authorId    String
+  episodes    Episode[]
+  isDeleted   Boolean               @default(false) // New field
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  subscribers PodcastSubscription[]
+
+  @@map("podcasts")
+}
+
+model Episode {
+  episode_id  String           @id @default(uuid())
+  title       String
+  description String
+  audioUrl    String // URL to audio file (e.g., S3)
+  duration    Int // Duration in seconds
+  publishDate DateTime         @default(now())
+  podcast     Podcast          @relation(fields: [podcastId], references: [podcast_id])
+  podcastId   String
+  isDeleted   Boolean          @default(false) // New field
+  listens     Listen[]
+  transcript  Transcript?
+  comments    PodcastComment[]
+
+  @@map("episodes")
+}
+
+model Listen {
+  listen_id  String   @id @default(uuid())
+  episode    Episode  @relation(fields: [episodeId], references: [episode_id])
+  episodeId  String
+  user       User?    @relation(fields: [userId], references: [id]) // Null for anonymous
+  userId     String?
+  listenedAt DateTime @default(now())
+}
+
+// Transcripts (for accessibility/search)
+model Transcript {
+  transcript_id String   @id @default(uuid())
+  content       String // Full text of the episode
+  language      String   @default("en")
+  episode       Episode  @relation(fields: [episodeId], references: [episode_id])
+  episodeId     String   @unique
+  isDeleted     Boolean  @default(false) // New field
+  createdAt     DateTime @default(now())
+
+  @@map("transcripts")
+}
+
+// User subscriptions
+model PodcastSubscription {
+  podsub_id String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  podcast   Podcast  @relation(fields: [podcastId], references: [podcast_id])
+  podcastId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, podcastId]) // Prevent duplicate subscriptions
+}
+
+// Comments on episodes
+model PodcastComment {
+  podcom_id String           @id @default(uuid())
+  content   String
+  episode   Episode          @relation(fields: [episodeId], references: [episode_id])
+  episodeId String
+  user      User             @relation(fields: [userId], references: [id])
+  userId    String
+  parentId  String? // For nested replies
+  parent    PodcastComment?  @relation("CommentHierarchy", fields: [parentId], references: [podcom_id])
+  replies   PodcastComment[] @relation("CommentHierarchy")
+  createdAt DateTime         @default(now())
+
+  @@map("podcast_comments")
 }
