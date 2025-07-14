@@ -143,6 +143,8 @@ model User {
   companyReview   CompanyReview[]   @relation(name: "employeur")
   ChatParticipant ChatParticipant[]
   ChatMessage     ChatMessage[]
+  ChatInvite      ChatInvite[]
+  ChatAuditLog    ChatAuditLog[]
 
   @@map("users")
 }
@@ -571,6 +573,8 @@ model ChatRoom {
   createdAt    DateTime          @default(now())
   participants ChatParticipant[]
   messages     ChatMessage[]
+  ChatInvite   ChatInvite[]
+  ChatAuditLog ChatAuditLog[]
 
   @@map("rooms")
 }
@@ -582,7 +586,8 @@ model ChatParticipant {
   user           User     @relation(fields: [userId], references: [id])
   roomId         String
   room           ChatRoom @relation(fields: [roomId], references: [room_id])
-  isAdmin   Boolean  @default(false) // New field
+  isAdmin        Boolean  @default(false) // New field
+  role           ChatRole @default(MEMBER) // Replaces `isAdmin`
   joinedAt       DateTime @default(now())
 
   @@unique([userId, roomId]) // Prevent duplicates
@@ -597,7 +602,43 @@ model ChatMessage {
   room       ChatRoom @relation(fields: [roomId], references: [room_id])
   senderId   String
   sender     User     @relation(fields: [senderId], references: [id])
+  isDeleted  Boolean  @default(false) // New field
   createdAt  DateTime @default(now())
 
   @@map("messages")
+}
+
+// 1. Invitation Links
+model ChatInvite {
+  invite_id String   @id @default(uuid())
+  roomId    String
+  room      ChatRoom @relation(fields: [roomId], references: [room_id])
+  creatorId String // User who created the invite
+  creator   User     @relation(fields: [creatorId], references: [id])
+  token     String   @unique // Unique invite token (e.g., JWT or random string)
+  expiresAt DateTime // Optional expiry
+  maxUses   Int? // Optional use limit
+  usedCount Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("chat_invites")
+}
+
+// 2. Role-Based Permissions
+enum ChatRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+model ChatAuditLog {
+  log_id    String   @id @default(uuid())
+  action    String // e.g., "USER_ADDED", "INVITE_USED", "ROLE_CHANGED"
+  roomId    String
+  room      ChatRoom @relation(fields: [roomId], references: [room_id])
+  actorId   String // User who performed the action
+  actor     User     @relation(fields: [actorId], references: [id])
+  targetId  String? // Affected user (if applicable)
+  metadata  Json? // Additional context (e.g., { oldRole: "MEMBER", newRole: "MODERATOR" })
+  createdAt DateTime @default(now())
 }

@@ -10,8 +10,8 @@ import http from 'http';
 import env from './config/env.js';
 import baseRoutes from './routes/index.js';
 import { ErrorHandler } from './middlewares/errorHandler.js';
-//import { socketBlock } from './jobs/socketio.js';
-//import { onboardingTrialCheck } from './jobs/onboard.cronjob.js';
+import { socketBlock } from './jobs/socketio.js';
+
 import swaggerUi from 'swagger-ui-express';
 //import { apiDocumentation } from './docs/apidocs.js';
 import { createKeys } from './utils/vault.js';
@@ -50,10 +50,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(morgan('combined'));
 //app.use(`/api/v1/mmcop/stag/documentation`, swaggerUi.serve, swaggerUi.setup(apiDocumentation));
 const port = env.port;
-
-//onboardingTrialCheck();
-
-//socketBlock({ io });
+// Track online users
+const onlineUsers = new Map(); // { userId: socketId }
+socketBlock({ io, onlineUsers });
 
 if (env.node_env === 'production') {
   // routes
