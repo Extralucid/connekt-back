@@ -97,6 +97,7 @@ enum Role {
   ADMIN
   MODERATOR
   USER
+  EMPLOYER // New role for job posters
 }
 
 model User {
@@ -132,13 +133,22 @@ model User {
   replies       Reply[]
   votes         Vote[]
   notifications Notification[]
+  Job           Job[]
+  Bookmark      Bookmark[]
+
+  jobAlerts       JobAlert[]
+  reviews         CompanyReview[]   @relation(name: "utilisateur")
+  applications    Application[]
+  viewedJobs      JobView[]
+  companyReview   CompanyReview[]   @relation(name: "employeur")
+  ChatParticipant ChatParticipant[]
+  ChatMessage     ChatMessage[]
 
   @@map("users")
 }
 
 model Tdocument {
   idtdoc          String   @id @unique @default(uuid())
-  codetdoc        String   @unique @db.VarChar(255)
   nomtdoc         String   @db.VarChar(255)
   descriptiontdoc String?
   published       Boolean? @default(true) @db.Boolean
@@ -147,22 +157,28 @@ model Tdocument {
   updatedAt       DateTime @updatedAt
 
   Document Document[]
+
+  @@map("tdocuments")
 }
 
 model Document {
-  iddocument          String    @id @unique @default(uuid())
-  nomDocument         String?   @db.VarChar(255)
-  codeDocument        String    @unique @db.VarChar(255)
-  descriptionDocument String?
-  published           Boolean?  @default(true) @db.Boolean
-  imported            Boolean?  @default(false) @db.Boolean
-  isDeleted           Boolean?  @default(false) @db.Boolean
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  tdocId              String
-  Tdocument           Tdocument @relation(fields: [tdocId], references: [idtdoc], onDelete: Cascade, onUpdate: NoAction)
-  userId              String?
-  User                User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  iddocument  String   @id @unique @default(uuid())
+  nomDocument String?  @db.VarChar(255)
+  description String?
+  fileUrl     String   @db.VarChar(255) // PDF stored in S3/Cloud Storage
+  published   Boolean? @default(true) @db.Boolean
+  isDeleted   Boolean? @default(false) @db.Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tdocId      String
+
+  Tdocument Tdocument @relation(fields: [tdocId], references: [idtdoc], onDelete: Cascade, onUpdate: NoAction)
+  userId    String?
+  User      User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  applications ApplicationDoc[]
+
+  @@map("documents")
 }
 
 model RefreshToken {
@@ -209,18 +225,18 @@ model Category {
   name         String         @db.VarChar(250)
   slug         String         @unique @db.VarChar(250)
   description  String?        @db.Text
-  isDeleted Boolean  @default(false) @db.Boolean
+  isDeleted    Boolean        @default(false) @db.Boolean
   PostCategory PostCategory[]
 
   @@map("categories")
 }
 
 model Tag {
-  tag_id  String    @id @unique @default(uuid()) //(PK, Auto-increment)
-  name    String    @db.VarChar(250)
-  slug    String    @unique @db.VarChar(250)
-  isDeleted Boolean  @default(false) @db.Boolean
-  PostTag PostTag[]
+  tag_id    String    @id @unique @default(uuid()) //(PK, Auto-increment)
+  name      String    @db.VarChar(250)
+  slug      String    @unique @db.VarChar(250)
+  isDeleted Boolean   @default(false) @db.Boolean
+  PostTag   PostTag[]
 
   @@map("tags")
 }
@@ -275,7 +291,7 @@ model Forum {
   displayOrder  Int     @default(0)
   childForums   Forum[] @relation("ForumHierarchy")
   topics        Topic[]
-  isDeleted Boolean  @default(false) @db.Boolean
+  isDeleted     Boolean @default(false) @db.Boolean
 
   @@map("forums")
 }
@@ -357,4 +373,231 @@ enum SourceType {
   TOPIC
   REPLY
   COMMENT
+}
+
+//jobs model
+model Job {
+  job_id         String        @id @unique @default(uuid())
+  title          String        @db.Text
+  description    String        @db.Text
+  jobType        JobType       @default(FULL_TIME)
+  location       String?       @db.VarChar(250)
+  remote         Boolean       @default(false)
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String?       @default("USD")
+  expiryDate     DateTime? // Job post expiry
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  employerId     String // Who posted the job
+  employer       User          @relation(fields: [employerId], references: [id])
+  applications   Application[]
+  categories     JobCategory[]
+  skills         JobSkill[]
+  Bookmark       Bookmark[]
+  JobView        JobView[]
+
+  @@map("jobs")
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+model Categorie {
+  cat_id              String        @id @unique @default(uuid())
+  name                String        @db.VarChar(250)
+  slug                String        @unique
+  jobs                JobCategory[]
+  JobAlert            JobAlert?     @relation(fields: [jobAlertJobalert_id], references: [jobalert_id])
+  jobAlertJobalert_id String?
+  isDeleted           Boolean       @default(false) @db.Boolean
+
+  @@map("job_categories")
+}
+
+model Skill {
+  skill_id  String     @id @unique @default(uuid())
+  name      String     @db.VarChar(250)
+  slug      String     @unique
+  isDeleted Boolean    @default(false) @db.Boolean
+  jobs      JobSkill[]
+
+  @@map("skills")
+}
+
+// Junction tables
+model JobCategory {
+  job         Job       @relation(fields: [jobId], references: [job_id])
+  jobId       String
+  categorie   Categorie @relation(fields: [categorieId], references: [cat_id])
+  categorieId String
+
+  @@unique([jobId, categorieId]) // Prevent duplicate votes
+  @@map("job_categories_data")
+}
+
+model JobSkill {
+  job     Job    @relation(fields: [jobId], references: [job_id])
+  jobId   String
+  skill   Skill  @relation(fields: [skillId], references: [skill_id])
+  skillId String
+
+  @@id([jobId, skillId])
+  @@map("job_skills")
+}
+
+model Application {
+  app_id           String             @id @unique @default(uuid())
+  coverLetter      String?            @db.Text
+  status           AppStatus          @default(PENDING)
+  createdAt        DateTime           @default(now())
+  jobId            String
+  job              Job                @relation(fields: [jobId], references: [job_id])
+  userId           String // Applicant
+  user             User               @relation(fields: [userId], references: [id])
+  documents        ApplicationDoc[]
+  ApplicationEvent ApplicationEvent[]
+
+  @@map("applications")
+}
+
+enum AppStatus {
+  PENDING
+  REVIEWED
+  REJECTED
+  INTERVIEW
+  HIRED
+}
+
+// Junction tables
+model ApplicationDoc {
+  application Application @relation(fields: [appId], references: [app_id])
+  appId       String
+  document    Document    @relation(fields: [docId], references: [iddocument])
+  docId       String
+
+  @@id([appId, docId])
+  @@map("application_documents")
+}
+
+model Bookmark {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  jobId  String
+  job    Job    @relation(fields: [jobId], references: [job_id])
+
+  @@unique([userId, jobId])
+}
+
+//job alert tracking
+model JobAlert {
+  jobalert_id String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  keywords    String[] // e.g., ["React", "Remote"]
+  categories  Categorie[] // Optional: Alerts by category
+  frequency   AlertFrequency @default(DAILY)
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+
+  @@map("job_alerts")
+}
+
+enum AlertFrequency {
+  INSTANT // Notify immediately
+  DAILY
+  WEEKLY
+}
+
+model CompanyReview {
+  review_id  String   @id @default(uuid())
+  rating     Int      @db.Integer // 1-5 stars
+  title      String   @db.VarChar(250)
+  review     String   @db.VarChar(250)
+  pros       String[] // e.g., ["Great culture", "Flexible hours"]
+  cons       String[] // e.g., ["Low pay", "Slow growth"]
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], name: "utilisateur")
+  employerId String
+  employer   User     @relation(fields: [employerId], references: [id], name: "employeur")
+  createdAt  DateTime @default(now())
+  isApproved Boolean  @default(false) // Moderation
+
+  @@map("company_reviews")
+}
+
+model ApplicationEvent {
+  app_event_id  String       @id @default(uuid())
+  applicationId String
+  application   Application  @relation(fields: [applicationId], references: [app_id])
+  type          AppEventType
+  message       String? // e.g., "Interview on Jan 30"
+  createdBy     String // User ID (employer/admin)
+  createdAt     DateTime     @default(now())
+
+  @@map("application_events")
+}
+
+enum AppEventType {
+  STATUS_CHANGE
+  INTERVIEW
+  NOTE // Internal comments
+  EMAIL_SENT
+}
+
+model JobView {
+  job_view_id String   @id @default(uuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [job_id])
+  userId      String? // Null if anonymous
+  user        User?    @relation(fields: [userId], references: [id])
+  viewedAt    DateTime @default(now())
+  ipAddress   String? // For analytics
+
+  @@map("job_views")
+}
+
+// Chat Rooms (1:1 or Group)
+model ChatRoom {
+  room_id      String            @id @default(uuid())
+  name         String? // Group name (nullable for 1:1 chats)
+  isGroup      Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+
+  @@map("rooms")
+}
+
+// Track who's in which chat
+model ChatParticipant {
+  participant_id String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  roomId         String
+  room           ChatRoom @relation(fields: [roomId], references: [room_id])
+  isAdmin   Boolean  @default(false) // New field
+  joinedAt       DateTime @default(now())
+
+  @@unique([userId, roomId]) // Prevent duplicates
+  @@map("chat_participants")
+}
+
+// Chat Messages
+model ChatMessage {
+  message_id String   @id @default(uuid())
+  content    String
+  roomId     String
+  room       ChatRoom @relation(fields: [roomId], references: [room_id])
+  senderId   String
+  sender     User     @relation(fields: [senderId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@map("messages")
 }

@@ -8,6 +8,12 @@ import tagRoute from './blog/tag.routes.js';
 import postRoute from './blog/post.routes.js';
 import commentRoute from './blog/comment.routes.js';
 
+//job routes imports
+import categorieRoute from './jobs/categorie.routes.js';
+import jobRoute from './jobs/job.routes.js';
+import skillRoute from './jobs/skill.routes.js';
+import applicationRoute from './jobs/application.routes.js';
+
 //forum
 import forumRoute from './forum/forum.routes.js';
 import topicRoute from './forum/topic.routes.js';
@@ -19,15 +25,21 @@ export default (router) => {
   router.use('/document', documentRoute());
 
   router.use('/tdocument', tdocumentRoute());
-
-  router.use('/category', categoryRoute());
+  //blog
+  router.use('/blog-category', categoryRoute());
   router.use('/tag', tagRoute());
   router.use('/post', postRoute());
   router.use('/comment', commentRoute());
 
   //forum routes
-    router.use('/forum', forumRoute());
-    router.use('/topic', topicRoute());
-    router.use('/reply', replyRoute());
+  router.use('/forum', forumRoute());
+  router.use('/topic', topicRoute());
+  router.use('/reply', replyRoute());
+
+  //jobs routes
+  router.use('/job', jobRoute());
+  router.use('/application', applicationRoute());
+  router.use('/skill', skillRoute());
+  router.use('/job-catgory', categorieRoute());
   return router;
 };
