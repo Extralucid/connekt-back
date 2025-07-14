@@ -19,6 +19,8 @@ import forumRoute from './forum/forum.routes.js';
 import topicRoute from './forum/topic.routes.js';
 import replyRoute from './forum/reply.routes.js';
 
+import chatRoute from './chat/chat.routes.js';
+
 export default (router) => {
   router.use('/auth', authRoute());
   router.use('/user', userRoute());
@@ -41,5 +43,8 @@ export default (router) => {
   router.use('/application', applicationRoute());
   router.use('/skill', skillRoute());
   router.use('/job-catgory', categorieRoute());
+
+  //chat routes
+  router.use('/chat', chatRoute());
   return router;
 };

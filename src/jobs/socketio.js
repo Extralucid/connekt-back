@@ -1,46 +1,63 @@
-// import conversationModel from '../models/messages/conversationModel.js';
-// import messageModel from '../models/messages/messageModel.js';
-// import { addUser, getUser, removeUser } from '../services/messages/socketFunction.js';
 
-// export function socketBlock({ io }) {
-//   io.on('connection', (socket) => {
-//     // user joinin the conversation
-//     socket.on('add_user', async ({ user_id }) => {
-//       const socket_id = socket.id;
-//       const users = await addUser({ user_id, socket_id });
-//       io.emit('get_users', users);
-//     });
+import { createChatRoom, addToGroup, removeFromGroup } from '../services/chat/chat.services.js';
+import db from '../db/connection.js';
 
-//     // let us chat
-//     socket.on('send_messages', async ({ sender_id, receiver_id, conversation_id, text, _id }) => {
-//       let user = await getUser({ user_id: receiver_id });
-//       let me = await getUser({ user_id: sender_id });
+export function socketBlock({ io, onlineUsers }) {
 
-//       const conversation = await conversationModel.findById(conversation_id);
+    io.on('connection', (socket) => {
 
-//       if (conversation) {
-//         conversation.lastText = text;
+        console.log('User connected:', socket.id);
 
-//         await conversation.save();
-//       }
+        // 1. Listen for user login (store socketId)
+        socket.on('user-online', (userId) => {
+            onlineUsers.set(userId, socket.id);
+        });
 
-//       await messageModel.create({
-//         conversation_id,
-//         sender_id,
-//         text
-//       });
+        // When a user joins a room (for real-time chat)
+        socket.on('join-room', (roomId) => {
+            socket.join(roomId);
+        });
 
-//       if (user) {
-//         io.to(me.socket_id)
-//           .to(user.socket_id)
-//           .emit('get_message', { receiver_id, sender_id, text, _id });
-//       } else {
-//         io.to(me.socket_id).emit('get_message', { receiver_id, sender_id, text, _id });
-//       }
-//     });
+        // When a user leaves a room
+        socket.on('leave-room', (roomId) => {
+            socket.leave(roomId);
+        });
 
-//     socket.on('disconnect', async () => {
-//       await removeUser({ socket_id: socket.id });
-//     });
-//   });
-// }
+        // user joinin the conversation
+        // socket.on('add_user', async ({ user_id }) => {
+        //     const socket_id = socket.id;
+        //     const users = await addUser({ user_id, socket_id });
+        //     io.emit('get_users', users);
+        // });
+
+        // 2. Handle sending messages
+        socket.on('send-message', async (data) => {
+            const { roomId, senderId, content } = data;
+            const message = await db.chatMessage.create({
+                data: { roomId, senderId, content },
+                include: { sender: true },
+            });
+
+            // Emit to all room participants
+            const participants = await db.chatParticipant.findMany({
+                where: { roomId },
+                select: { userId: true },
+            });
+
+            participants.forEach(({ userId }) => {
+                const recipientSocketId = onlineUsers.get(userId);
+                if (recipientSocketId) {
+                    io.to(recipientSocketId).emit('new-message', message);
+                }
+            });
+        });
+
+        // 3. Handle disconnections
+        socket.on('disconnect', () => {
+            onlineUsers.forEach((value, key) => {
+                if (value === socket.id) onlineUsers.delete(key);
+            });
+        });
+
+    });
+}
