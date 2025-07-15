@@ -20,6 +20,7 @@ import topicRoute from './forum/topic.routes.js';
 import replyRoute from './forum/reply.routes.js';
 
 import chatRoute from './chat/chat.routes.js';
+import podcastRoute from './podcast/podcast.routes.js';
 
 export default (router) => {
   router.use('/auth', authRoute());
@@ -46,5 +47,6 @@ export default (router) => {
 
   //chat routes
   router.use('/chat', chatRoute());
+    router.use('/podcast', podcastRoute());
   return router;
 };

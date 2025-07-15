@@ -1,14 +1,14 @@
 import { BadRequestError } from '../../../lib/appErrors.js';
-import  jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import  { generateTokens } from '../../utils/jwt.js';
+import { generateTokens } from '../../utils/jwt.js';
 import db from '../../db/connection.js';
 import { codeGenerator } from '../../utils/codeGenerator.js';
 import { hashToken } from '../../utils/hashToken.js';
 
 // used when we create a refresh token.
- const addRefreshTokenToWhitelist = async ({ jti, refreshToken, userId }) => {
+const addRefreshTokenToWhitelist = async ({ jti, refreshToken, userId }) => {
     return db.refreshToken.create({
         data: {
             id: jti,
@@ -16,7 +16,7 @@ import { hashToken } from '../../utils/hashToken.js';
             userId
         },
     });
-    
+
 }
 
 export const getUserProfileData = async (userId) => {
@@ -30,7 +30,7 @@ export const getUserProfileData = async (userId) => {
     });
     delete userData.password;
     return userData;
-    
+
 }
 function findUserByEmail(email) {
     return db.user.findFirst({
@@ -85,59 +85,59 @@ export const revokeTokens = async ({ userId }) => {
     });
 }
 
-export const refreshToken = async ({body}) => {
+export const refreshToken = async ({ body }) => {
     try {
-      const { refreshToken } = body;
-      if (!refreshToken) {
-        throw new BadRequestError('Missing refresh token.');
-      }
-      const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-      const savedRefreshToken = await findRefreshTokenById(payload.jti);
-  
-      if (!savedRefreshToken || savedRefreshToken.revoked === true) {
-        throw new BadRequestError('Unauthorized');
-      }
-  
-      const hashedToken = hashToken(refreshToken);
-      if (hashedToken !== savedRefreshToken.hashedToken) {
-        throw new BadRequestError('Unauthorized');
-      }
-  
-      const user = await findUserById(payload.userId);
-      if (!user) {
-        throw new BadRequestError('Unauthorized');
-      }
-  
-      await deleteRefreshToken(savedRefreshToken.id);
-      const jti = uuidv4();
-      const { accessToken, refreshToken: newRefreshToken } = generateTokens(user, jti);
-      await addRefreshTokenToWhitelist({ jti, refreshToken: newRefreshToken, userId: user.id });
-  
-      return {
-        accessToken,
-        refreshToken: newRefreshToken
-      };
+        const { refreshToken } = body;
+        if (!refreshToken) {
+            throw new BadRequestError('Missing refresh token.');
+        }
+        const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const savedRefreshToken = await findRefreshTokenById(payload.jti);
+
+        if (!savedRefreshToken || savedRefreshToken.revoked === true) {
+            throw new BadRequestError('Unauthorized');
+        }
+
+        const hashedToken = hashToken(refreshToken);
+        if (hashedToken !== savedRefreshToken.hashedToken) {
+            throw new BadRequestError('Unauthorized');
+        }
+
+        const user = await findUserById(payload.userId);
+        if (!user) {
+            throw new BadRequestError('Unauthorized');
+        }
+
+        await deleteRefreshToken(savedRefreshToken.id);
+        const jti = uuidv4();
+        const { accessToken, refreshToken: newRefreshToken } = generateTokens(user, jti);
+        await addRefreshTokenToWhitelist({ jti, refreshToken: newRefreshToken, userId: user.id });
+
+        return {
+            accessToken,
+            refreshToken: newRefreshToken
+        };
     } catch (err) {
         throw new BadRequestError('Une erreur s\'est produite');
     }
-  };
-  
-  // This endpoint is only for demo purpose.
-  // Move this logic where you need to revoke the tokens( for ex, on password reset)
-  export const revokeToken = async({body}) => {
+};
+
+// This endpoint is only for demo purpose.
+// Move this logic where you need to revoke the tokens( for ex, on password reset)
+export const revokeToken = async ({ body }) => {
     try {
-      const { userId } = body.userId;
-      await revokeTokens(userId);
-      return { message: `Tokens revoked for user with id #${userId}` };
+        const { userId } = body.userId;
+        await revokeTokens(userId);
+        return { message: `Tokens revoked for user with id #${userId}` };
     } catch (err) {
-      next(err);
+        next(err);
     }
-  };
+};
 
 export const signUpMemberAuthentication = async ({ body }) => {
     try {
         console.log(body);
-        
+
         if (!body.email || !body.password) {
             throw new BadRequestError('You must provide an email and a password.');
         }
@@ -176,40 +176,66 @@ export const signUpMemberAuthentication = async ({ body }) => {
     }
 };
 
+// service
+export const savePreferences = async ({ body, user }) => {
+    const { bookCategories, tutorialTopics, language, notifyNewContent } = body;
+    const userId = user.id;
 
-export const signInMemberAuthentication = async ({body}) => {
+    // Create or update preferences
+    await user.userPreference.upsert({
+        where: { userId },
+        create: {
+            userId,
+            language,
+            notifyNewContent,
+            bookCategories: { connect: bookCategories.map(id => ({ bookcat_id: id })) },
+            tutorialTopics: { connect: tutorialTopics.map(id => ({ tutcat_id: id })) },
+        },
+        update: {
+            language,
+            notifyNewContent,
+            bookCategories: { set: bookCategories.map(id => ({ bookcat_id: id })) },
+            tutorialTopics: { set: tutorialTopics.map(id => ({ tutcat_id: id })) },
+        },
+    });
+
+    res.status(200).json({ success: true });
+};
+
+
+export const signInMemberAuthentication = async ({ body }) => {
     try {
-      const { email, password } = body;
-      if (!email || !password) {
-        throw new BadRequestError('You must provide an email and a password.');
-      }
-  
-      const existingUser = await findUserByEmail(email);
-  
-      if (!existingUser) {
-        throw new BadRequestError('Invalid login credentials.');
-      }
-  
-      const validPassword = await bcrypt.compare(password, existingUser.password);
-      if (!validPassword) {
-        throw new BadRequestError('Invalid login credentials.');
-      }
-  
-      const jti = uuidv4();
-      const { accessToken, refreshToken } = generateTokens(existingUser, jti);
-      await addRefreshTokenToWhitelist({ jti, refreshToken, userId: existingUser.id });
-  
-      return {
-        accessToken,
-        refreshToken
-      };
+        const { email, password } = body;
+        if (!email || !password) {
+            throw new BadRequestError('You must provide an email and a password.');
+        }
+
+        const existingUser = await findUserByEmail(email);
+
+        if (!existingUser) {
+            throw new BadRequestError('Invalid login credentials.');
+        }
+
+        const validPassword = await bcrypt.compare(password, existingUser.password);
+        if (!validPassword) {
+            throw new BadRequestError('Invalid login credentials.');
+        }
+
+        const jti = uuidv4();
+        const { accessToken, refreshToken } = generateTokens(existingUser, jti);
+        await addRefreshTokenToWhitelist({ jti, refreshToken, userId: existingUser.id });
+
+        return {
+            accessToken,
+            refreshToken
+        };
     } catch (err) {
         console.log(err);
-        
+
         throw new BadRequestError(err.message);
     }
-  };
-  
+};
+
 
 async function findRessourceByCode(code) {
     return await db.ressource.findFirst({
