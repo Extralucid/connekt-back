@@ -23,6 +23,10 @@ export function socketBlock({ io, onlineUsers }) {
             socket.leave(roomId);
         });
 
+        socket.on('join-episode-room', (episodeId) => {
+            socket.join(`episode:${episodeId}`);
+        });
+
         // user joinin the conversation
         // socket.on('add_user', async ({ user_id }) => {
         //     const socket_id = socket.id;

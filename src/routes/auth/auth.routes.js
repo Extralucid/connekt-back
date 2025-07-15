@@ -1,5 +1,5 @@
 import router from 'express';
-import { profileDataHandler, refreshTokenHandler, revokeTokenHandler, signInMemberAuthenticationHandler, signUpMemberAuthenticationHandler } from '../../controllers/auth/auth.controller.js';
+import { preferenceHandler, profileDataHandler, refreshTokenHandler, revokeTokenHandler, signInMemberAuthenticationHandler, signUpMemberAuthenticationHandler } from '../../controllers/auth/auth.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
 import { registerSchema, loginSchema } from '../../validators/auth/auth.validator.js';
 import { validateData } from '../../middlewares/validationMiddleware.js';
@@ -13,6 +13,11 @@ const authRoute = () => {
     '/signup',
     validateData(registerSchema),
     signUpMemberAuthenticationHandler
+  );
+  authRoutes.post(
+    '/preferences',
+    authentication,
+    preferenceHandler
   );
   authRoutes.post(
     '/signin',

@@ -136,19 +136,24 @@ model User {
   Job           Job[]
   Bookmark      Bookmark[]
 
-  jobAlerts           JobAlert[]
-  reviews             CompanyReview[]       @relation(name: "utilisateur")
-  applications        Application[]
-  viewedJobs          JobView[]
-  companyReview       CompanyReview[]       @relation(name: "employeur")
-  ChatParticipant     ChatParticipant[]
-  ChatMessage         ChatMessage[]
-  ChatInvite          ChatInvite[]
-  ChatAuditLog        ChatAuditLog[]
-  Podcast             Podcast[]
-  Listen              Listen[]
-  PodcastSubscription PodcastSubscription[]
-  PodcastComment      PodcastComment[]
+  jobAlerts            JobAlert[]
+  reviews              CompanyReview[]       @relation(name: "utilisateur")
+  applications         Application[]
+  viewedJobs           JobView[]
+  companyReview        CompanyReview[]       @relation(name: "employeur")
+  chatParticipants     ChatParticipant[]
+  chatMessages         ChatMessage[]
+  chatInvites          ChatInvite[]
+  chatAuditLogs        ChatAuditLog[]
+  podcasts             Podcast[]
+  listens              Listen[]
+  podcastSubscriptions PodcastSubscription[]
+  podcastComments      PodcastComment[]
+  books                UserBook[]
+  tutorials            Tutorial[]
+  tutorialProgress     TutorialProgress[]
+  preferences          UserPreference?       @relation(fields: [preferenceId], references: [preference_id])
+  preferenceId         String?                  @unique
 
   @@map("users")
 }
@@ -422,7 +427,7 @@ model Categorie {
   JobAlert            JobAlert?     @relation(fields: [jobAlertJobalert_id], references: [jobalert_id])
   jobAlertJobalert_id String?
   isDeleted           Boolean       @default(false) @db.Boolean
-
+  
   @@map("job_categories")
 }
 
@@ -731,4 +736,115 @@ model PodcastComment {
   createdAt DateTime         @default(now())
 
   @@map("podcast_comments")
+}
+
+model Book {
+  book_id     String         @id @default(uuid())
+  title       String
+  description String
+  coverImage  String?
+  author      String
+  price       Float? // Free if null
+  fileUrl     String? // PDF/EPUB stored in S3
+  pages       Json? // For online reading (e.g., {1: "content...", 2: "..."})
+  categories  BookCategory[]
+  isDeleted   Boolean        @default(false) // New field
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  UserBook    UserBook[]
+
+  @@map("books")
+}
+
+model BookCategory {
+  bookcat_id                  String          @id @default(uuid())
+  name                        String
+  slug                        String          @unique
+  isDeleted                   Boolean         @default(false) // New field
+  books                       Book[]
+  users UserPreference[] // Many-to-many with UserPreference
+
+  @@map("book_categories")
+}
+
+model UserBook {
+  userbook_id String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  book        Book     @relation(fields: [bookId], references: [book_id])
+  bookId      String
+  progress    Int      @default(0) // Last read page
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, bookId])
+  @@map("user_books")
+}
+
+model Tutorial {
+  tutorial_id      String             @id @default(uuid())
+  title            String
+  description      String
+  thumbnail        String?
+  author           User               @relation(fields: [authorId], references: [id])
+  authorId         String
+  sections         TutorialSection[]
+  difficulty       String             @default("beginner") // beginner/intermediate/advanced
+  duration         Int? // Minutes
+  categories       TutorialCategory[]
+  createdAt        DateTime           @default(now())
+  TutorialProgress TutorialProgress[]
+  isDeleted        Boolean            @default(false) // New field
+
+  @@map("tutorials")
+}
+
+model TutorialSection {
+  tutsection_id String   @id @default(uuid())
+  title         String
+  content       String // Markdown/HTML
+  videoUrl      String? // Optional embedded video
+  order         Int // Display order
+  tutorial      Tutorial @relation(fields: [tutorialId], references: [tutorial_id])
+  tutorialId    String
+  isDeleted     Boolean  @default(false) // New field
+
+  @@map("tutorial_sections")
+}
+
+model TutorialProgress {
+  tutprogress_id String   @id @default(uuid())
+  user           User     @relation(fields: [userId], references: [id])
+  userId         String
+  tutorial       Tutorial @relation(fields: [tutorialId], references: [tutorial_id])
+  tutorialId     String
+  sectionId      String? // Last completed section
+  isDeleted      Boolean  @default(false) // New field
+  isDone         Boolean  @default(false)
+
+  @@unique([userId, tutorialId])
+  @@map("tutorial_progress")
+}
+
+model TutorialCategory {
+  tutcat_id                   String          @id @default(uuid())
+  name                        String
+  slug                        String          @unique
+  isDeleted                   Boolean         @default(false) // New field
+  tutorials                   Tutorial[]
+  users UserPreference[] // Many-to-many with UserPreference
+
+  @@map("tutorial_categories")
+}
+
+//users preferences
+
+model UserPreference {
+  preference_id    String             @id @default(uuid())
+  userId           String             @unique
+  bookCategories   BookCategory[] // Preferred book genres
+  tutorialTopics   TutorialCategory[] // Preferred tutorial topics
+  language         String             @default("en")
+  notifyNewContent Boolean            @default(true)
+
+  User User[]
 }
