@@ -1,11 +1,8 @@
 import { BadRequestError } from '../../../lib/appErrors.js';
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
-import { generateTokens } from '../../utils/jwt.js';
 import db from '../../db/connection.js';
 import { codeGenerator } from '../../utils/codeGenerator.js';
-import { hashToken } from '../../utils/hashToken.js';
+import redisClient from '../../config/redis.js';
 
 
 // soft delete tokens after usage.
@@ -106,30 +103,37 @@ export async function updateUserData(id) {
 }
 
 export const submitReview = async (body, userId) => {
-  const { employerId, rating, title, review, pros, cons } = body;
-  try {
-    const newReview = await db.companyReview.create({
-      data: {
-        employerId,
-        userId: userId,
-        rating,
-        title,
-        review,
-        pros,
-        cons,
-        isApproved: false, // Await moderation
-      },
-    });
-    return newReview;
-  } catch (error) {
-    throw new BadRequestError('Failed to submit review' );
-  }
+    const { employerId, rating, title, review, pros, cons } = body;
+    try {
+        const newReview = await db.companyReview.create({
+            data: {
+                employerId,
+                userId: userId,
+                rating,
+                title,
+                review,
+                pros,
+                cons,
+                isApproved: false, // Await moderation
+            },
+        });
+
+        // Clear cached reviews for this employer
+        await redisClient.del(`reviews:employer:${employerId}`);
+        return newReview;
+    } catch (error) {
+        throw new BadRequestError('Failed to submit review');
+    }
 };
 
 // reviewController.js
 export const getEmployerReviews = async ({ userId }) => {
-
+    const cacheKey = `reviews:employer:${id}`;
     try {
+        // Check cache
+        const cachedReviews = await redisClient.get(cacheKey);
+        if (cachedReviews) return JSON.parse(cachedReviews);
+
         const reviews = await db.companyReview.findMany({
             where: {
                 employerId: Number(userId),
@@ -138,6 +142,9 @@ export const getEmployerReviews = async ({ userId }) => {
             include: { user: true },
             orderBy: { createdAt: 'desc' },
         });
+
+        // Cache for 1 hour
+        await redisClient.setEx(cacheKey, 3600, JSON.stringify(reviews));
         return reviews;
     } catch (error) {
         throw new BadRequestError('Failed to fetch reviews');
