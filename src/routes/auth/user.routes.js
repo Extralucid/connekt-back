@@ -1,5 +1,5 @@
 import router from 'express';
-import { createUserHandler, deleteUserHandler, getUserHandler, listAllDeletedUsersHandler, listAllUsersHandler,  updateUserHandler } from '../../controllers/auth/user.controllers.js';
+import { createUserHandler, createUserReviewHandler, deleteUserHandler, getUserHandler, getUserReviewsHandler, listAllDeletedUsersHandler, listAllUsersHandler, updateUserHandler } from '../../controllers/auth/user.controllers.js';
 import { authentication } from '../../middlewares/authentication.js';
 
 const userRoutes = router.Router();
@@ -18,6 +18,16 @@ const userRoute = () => {
     '/list-all-users',
     authentication,
     listAllUsersHandler
+  );
+  userRoutes.post(
+    '/create-review',
+    authentication,
+    createUserReviewHandler
+  );
+  userRoutes.get(
+    '/employers/:userId/reviews',
+    authentication,
+    getUserReviewsHandler
   );
   userRoutes.get(
     '/list-deleted-users',

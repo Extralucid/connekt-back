@@ -1,5 +1,5 @@
 import router from 'express';
-import { createApplicationHandler, deleteApplicationHandler, getApplicationHandler, listAllDeletedApplicationsHandler, listAllApplicationsHandler, updateApplicationHandler } from '../../controllers/jobs/application.controller.js';
+import { createApplicationHandler, deleteApplicationHandler, getApplicationHandler, listAllDeletedApplicationsHandler, listAllApplicationsHandler, updateApplicationHandler, getApplicationTimelineHandler } from '../../controllers/jobs/application.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
 import { cache } from '../../middlewares/cacheMiddleware.js';
 
@@ -32,6 +32,11 @@ const applicationRoute = () => {
     '/get-application/:id',
     authentication,
     getApplicationHandler
+  );
+    applicationRoutes.get(
+    '/:id/timeline',
+    authentication,
+    getApplicationTimelineHandler
   );
   applicationRoutes.get(
     '/delete-application/:id',

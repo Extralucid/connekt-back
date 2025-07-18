@@ -105,12 +105,50 @@ export async function updateUserData(id) {
     }
 }
 
+export const submitReview = async (body, userId) => {
+  const { employerId, rating, title, review, pros, cons } = body;
+  try {
+    const newReview = await db.companyReview.create({
+      data: {
+        employerId,
+        userId: userId,
+        rating,
+        title,
+        review,
+        pros,
+        cons,
+        isApproved: false, // Await moderation
+      },
+    });
+    return newReview;
+  } catch (error) {
+    throw new BadRequestError('Failed to submit review' );
+  }
+};
+
+// reviewController.js
+export const getEmployerReviews = async ({ userId }) => {
+
+    try {
+        const reviews = await db.companyReview.findMany({
+            where: {
+                employerId: Number(userId),
+                isApproved: true, // Only show approved reviews
+            },
+            include: { user: true },
+            orderBy: { createdAt: 'desc' },
+        });
+        return reviews;
+    } catch (error) {
+        throw new BadRequestError('Failed to fetch reviews');
+    }
+};
 
 
 export const createUser = async ({ body }) => {
     try {
         console.log(body);
-        
+
         if (!body.email || !body.password) {
             throw new BadRequestError('You must provide an email and a password.');
         }

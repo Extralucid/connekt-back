@@ -1,6 +1,6 @@
 import appResponse from '../../../lib/appResponse.js';
 
-import { createJob, deleteJob, getJobById, listDeletedJobs, listJobs, listRecommendedJobs, updateJob } from '../../services/jobs/job.services.js';
+import { createJob, createJobAlert, deleteJob, getJobById, listDeletedJobs, listJobs, listRecommendedJobs, trackJobView, updateJob } from '../../services/jobs/job.services.js';
 
 
 export const createJobHandler = async (req, res) => {
@@ -9,6 +9,25 @@ export const createJobHandler = async (req, res) => {
     const response = await createJob({ body, user });
 
     res.send(appResponse('Job created successfully', response));
+};
+
+export const createJobAlertHandler = async (req, res) => {
+    const { keywords, frequency,  } = req.body;
+    const user  = req.user;
+
+    const response = await createJobAlert({ keywords, frequency, user });
+
+    res.send(appResponse('Job alert created successfully', response));
+};
+
+export const createJobTrackHandler = async (req, res) => {
+    const userId  = req.user.id;
+    const jobId  = req.user.id;
+    const ipAddress  = req.ip;
+
+    const response = await trackJobView({ jobId, userId, ipAddress });
+
+    res.send(appResponse('Job track created successfully', response));
 };
 
 export const updateJobHandler = async (req, res) => {

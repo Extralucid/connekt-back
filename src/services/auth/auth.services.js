@@ -25,13 +25,17 @@ export const getUserProfileData = async (userId) => {
             id: userId
         },
         include: {
-            Prestataire: true
+            preferences: {
+                include: { bookCategories: true, tutorialTopics: true, jobCategories: true, blogCategories: true }
+            }
         }
     });
     delete userData.password;
     return userData;
 
 }
+
+
 function findUserByEmail(email) {
     return db.user.findFirst({
         where: {
@@ -189,16 +193,16 @@ export const savePreferences = async ({ body, user }) => {
             language,
             notifyNewContent,
             bookCategories: { connect: bookCategories.map(id => ({ id })) },
-            tutorialTopics: { connect: tutorialTopics.map(id => ({  id })) },
+            tutorialTopics: { connect: tutorialTopics.map(id => ({ id })) },
             jobCategories: { connect: jobCategories.map(id => ({ id })) },
-            blogCategories: { connect: blogCategories.map(id => ({  id })) },
+            blogCategories: { connect: blogCategories.map(id => ({ id })) },
         },
         update: {
             language,
             notifyNewContent,
             bookCategories: { set: bookCategories.map(id => ({ id })) },
-            tutorialTopics: { set: tutorialTopics.map(id => ({  id })) },
-            jobCategories: { connect: jobCategories.map(id => ({  id })) },
+            tutorialTopics: { set: tutorialTopics.map(id => ({ id })) },
+            jobCategories: { connect: jobCategories.map(id => ({ id })) },
             blogCategories: { connect: blogCategories.map(id => ({ id })) },
         },
     });

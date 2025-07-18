@@ -1,6 +1,6 @@
 import appResponse from '../../../lib/appResponse.js';
 
-import { createApplication, deleteApplication, getApplicationById, listDeletedApplications, listApplications, updateApplication } from '../../services/jobs/application.services.js';
+import { createApplication, deleteApplication, getApplicationById, listDeletedApplications, listApplications, updateApplication, getApplicationTimeline } from '../../services/jobs/application.services.js';
 
 
 export const createApplicationHandler = async (req, res) => {
@@ -39,6 +39,13 @@ export const getApplicationHandler = async (req, res) => {
   const response = await getApplicationById({idapplication});
 
   res.send(appResponse('Applications fetched successfully', response));
+};
+export const getApplicationTimelineHandler = async (req, res) => {
+  const idapplication = req.params.id;
+
+  const response = await getApplicationTimeline({idapplication});
+
+  res.send(appResponse('Application timeline fetched successfully', response));
 };
 export const deleteApplicationHandler = async (req, res) => {
   const idapplication = req.params.id;

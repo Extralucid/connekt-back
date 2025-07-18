@@ -15,7 +15,7 @@ const authRoute = () => {
     signUpMemberAuthenticationHandler
   );
   authRoutes.post(
-    '/preferences',
+    '/onboarding/preferences',
     authentication,
     preferenceHandler
   );

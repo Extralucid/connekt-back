@@ -49,7 +49,7 @@ export async function getJobById({ job_id, user }) {
 
         const job = await db.job.findUnique({
             where: { job_id: job_id },
-            include: { categories: { include: { categorie: true } }, skills: true },
+            include: { categories: { include: { categorie: true } }, skills: true, JobView: true },
         }); // Utilise Prisma avec findUnique
 
         if (!job) {
@@ -88,10 +88,45 @@ export const createJob = async ({ body, user }) => {
                 } : undefined,
             },
         });
+        await redisClient.del(['cache:popular_jobs', `cache:reviews:${user.employerId}`]);
         return createdjob;
     } catch (err) {
         throw new BadRequestError(err.message)
 
+    }
+};
+
+// 
+export const trackJobView = async ({jobId, userId, ipAddress}) => {
+ 
+  try {
+    await db.jobView.create({
+      data: {
+        jobId: jobId,
+        userId: userId, // Null if anonymous
+        ipAddress: ipAddress,
+      },
+    });
+    return {};
+  } catch (error) {
+    throw new BadRequestError('Failed to track view' );
+  }
+};
+
+// 
+export const createJobAlert = async ({keywords, frequency, user}) => {
+    //const { keywords, frequency } = req.body;
+    try {
+        const alert = await db.jobAlert.create({
+            data: {
+                userId: user.id,
+                keywords,
+                frequency,
+            },
+        });
+        return alert;
+    } catch (error) {
+        throw new BadRequestError(err.message)
     }
 };
 
@@ -148,7 +183,7 @@ export const listJobs = async (page = 0,
 export const listRecommendedJobs = async (page = 0,
     limit = 10,
     search = "",
-    order = [], user=null) => {
+    order = [], user = null) => {
     try {
         const offset = Math.max(0, (page - 1) * limit);
         const sort = _.isEmpty(order) ? [] : JSON.parse(_.first(order));
@@ -160,7 +195,7 @@ export const listRecommendedJobs = async (page = 0,
                 : "asc";
         const jobs = await db.job.findMany({
             where: {
-               categories: {
+                categories: {
                     some: { id: { in: user.preferences.jobCategories } },
                 },
             },
@@ -174,7 +209,7 @@ export const listRecommendedJobs = async (page = 0,
 
         const countTotal = await db.job.count({
             where: {
-               categories: {
+                categories: {
                     some: { id: { in: user.preferences.jobCategories } },
                 },
             },
@@ -294,7 +329,7 @@ export const updateJob = async ({ body, user, job_id }) => {
             });
         }
 
-         // Clear cache for all job-related keys
+        // Clear cache for all job-related keys
         const cacheKeys = await redisClient.keys('cache:/api/v1/youth/stag/job*');
         if (cacheKeys.length) await redisClient.del(cacheKeys);
         //return updatedjob;
@@ -305,6 +340,7 @@ export const updateJob = async ({ body, user, job_id }) => {
             include: {
                 categories: { include: { categorie: true } },
                 skills: { include: { skill: true } },
+                JobView: true,
             },
         });
     } catch (error) {
