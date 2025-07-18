@@ -1,5 +1,5 @@
 import router from 'express';
-import { createJobHandler, deleteJobHandler, getJobHandler, listAllDeletedJobsHandler, listAllJobsHandler, updateJobHandler } from '../../controllers/jobs/job.controller.js';
+import { createJobHandler, deleteJobHandler, getJobHandler, listAllDeletedJobsHandler, listAllJobsHandler, listRecommendedJobsHandler, updateJobHandler } from '../../controllers/jobs/job.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
 import { cache } from '../../middlewares/cacheMiddleware.js';
 
@@ -21,6 +21,12 @@ const jobRoute = () => {
     authentication,
     cache(60),
     listAllJobsHandler
+  );
+    jobRoutes.get(
+    '/list-recommended-jobs',
+    authentication,
+    cache(60),
+    listRecommendedJobsHandler
   );
   jobRoutes.get(
     '/list-deleted-jobs',

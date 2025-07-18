@@ -1,6 +1,6 @@
 import appResponse from '../../../lib/appResponse.js';
 
-import { createJob, deleteJob, getJobById, listDeletedJobs, listJobs, updateJob } from '../../services/jobs/job.services.js';
+import { createJob, deleteJob, getJobById, listDeletedJobs, listJobs, listRecommendedJobs, updateJob } from '../../services/jobs/job.services.js';
 
 
 export const createJobHandler = async (req, res) => {
@@ -23,6 +23,14 @@ export const listAllJobsHandler = async (req, res) => {
   const { page = 1, limit = 10, search = "", order = [] } = req.query;
 
   const response = await listJobs(Number(page), Number(limit), search, order);
+
+  res.send(appResponse('Jobs listed successfully', response));
+};
+export const listRecommendedJobsHandler = async (req, res) => {
+  const { page = 1, limit = 10, search = "", order = [] } = req.query;
+  const  user  = req.user;
+
+  const response = await listRecommendedJobs(Number(page), Number(limit), search, order, user);
 
   res.send(appResponse('Jobs listed successfully', response));
 };

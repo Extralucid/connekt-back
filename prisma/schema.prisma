@@ -238,6 +238,7 @@ model Category {
   description  String?        @db.Text
   isDeleted    Boolean        @default(false) @db.Boolean
   PostCategory PostCategory[]
+  users UserPreference[] // Many-to-many with UserPreference
 
   @@map("categories")
 }
@@ -427,6 +428,7 @@ model Categorie {
   JobAlert            JobAlert?     @relation(fields: [jobAlertJobalert_id], references: [jobalert_id])
   jobAlertJobalert_id String?
   isDeleted           Boolean       @default(false) @db.Boolean
+  users UserPreference[] // Many-to-many with UserPreference
   
   @@map("job_categories")
 }
@@ -843,6 +845,8 @@ model UserPreference {
   userId           String             @unique
   bookCategories   BookCategory[] // Preferred book genres
   tutorialTopics   TutorialCategory[] // Preferred tutorial topics
+  blogCategories   Category[] // Preferred blog topics
+  jobCategories   Categorie[] // Preferred job topics
   language         String             @default("en")
   notifyNewContent Boolean            @default(true)
 

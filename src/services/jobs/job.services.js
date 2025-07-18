@@ -145,6 +145,55 @@ export const listJobs = async (page = 0,
     }
 };
 
+export const listRecommendedJobs = async (page = 0,
+    limit = 10,
+    search = "",
+    order = [], user=null) => {
+    try {
+        const offset = Math.max(0, (page - 1) * limit);
+        const sort = _.isEmpty(order) ? [] : JSON.parse(_.first(order));
+        const orderKey = _.isEmpty(sort) ? "title" : sort.id || "title";
+        const orderDirection = _.isEmpty(sort)
+            ? "desc"
+            : sort.desc
+                ? "desc"
+                : "asc";
+        const jobs = await db.job.findMany({
+            where: {
+               categories: {
+                    some: { id: { in: user.preferences.jobCategories } },
+                },
+            },
+            include: { categories: { include: { categorie: true } }, skills: true },
+            skip: Number(offset),
+            take: Number(limit),
+            orderBy: {
+                [orderKey]: orderDirection,
+            },
+        });
+
+        const countTotal = await db.job.count({
+            where: {
+               categories: {
+                    some: { id: { in: user.preferences.jobCategories } },
+                },
+            },
+        });
+
+        return {
+            data: jobs,
+            totalRow: countTotal,
+            totalPage: Math.ceil(countTotal / limit),
+        };
+
+    } catch (err) {
+        console.log(err);
+        throw new BadRequestError(err.message)
+
+    }
+};
+
+
 export const listDeletedJobs = async (page = 0,
     limit = 10,
     search = "",

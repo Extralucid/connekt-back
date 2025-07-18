@@ -178,24 +178,28 @@ export const signUpMemberAuthentication = async ({ body }) => {
 
 // service
 export const savePreferences = async ({ body, user }) => {
-    const { bookCategories, tutorialTopics, language, notifyNewContent } = body;
+    const { bookCategories, tutorialTopics, jobCategories, blogCategories, language, notifyNewContent } = body;
     const userId = user.id;
 
     // Create or update preferences
-    await user.userPreference.upsert({
+    await db.userPreference.upsert({
         where: { userId },
         create: {
             userId,
             language,
             notifyNewContent,
-            bookCategories: { connect: bookCategories.map(id => ({ bookcat_id: id })) },
-            tutorialTopics: { connect: tutorialTopics.map(id => ({ tutcat_id: id })) },
+            bookCategories: { connect: bookCategories.map(id => ({ id })) },
+            tutorialTopics: { connect: tutorialTopics.map(id => ({  id })) },
+            jobCategories: { connect: jobCategories.map(id => ({ id })) },
+            blogCategories: { connect: blogCategories.map(id => ({  id })) },
         },
         update: {
             language,
             notifyNewContent,
-            bookCategories: { set: bookCategories.map(id => ({ bookcat_id: id })) },
-            tutorialTopics: { set: tutorialTopics.map(id => ({ tutcat_id: id })) },
+            bookCategories: { set: bookCategories.map(id => ({ id })) },
+            tutorialTopics: { set: tutorialTopics.map(id => ({  id })) },
+            jobCategories: { connect: jobCategories.map(id => ({  id })) },
+            blogCategories: { connect: blogCategories.map(id => ({ id })) },
         },
     });
 
