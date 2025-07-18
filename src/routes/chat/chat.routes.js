@@ -1,5 +1,5 @@
 import router from 'express';
-import { createInviteHandler, acceptInviteHandler,listAllChatAuditLogHandler, getChatRoomHandler, createChatRoomHandler, listAllChatsHandler, addToGroupHandler, removeFromGroupHandler, listChatMessagesHandler } from '../../controllers/chat/chat.controller.js';
+import { createInviteHandler, acceptInviteHandler,listAllChatAuditLogHandler, getChatRoomHandler, createChatRoomHandler, listAllChatsHandler, addToGroupHandler, removeFromGroupHandler, listChatMessagesHandler, changeChatUserRoleHandler } from '../../controllers/chat/chat.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
 import { cache } from '../../middlewares/cacheMiddleware.js';
 import { isRoomAdmin } from '../../middlewares/isRoomAdmin.js';
@@ -34,6 +34,13 @@ const chatRoute = () => {
         authentication,
         isRoomAdmin,
         removeFromGroupHandler
+    );
+
+    chatRoutes.post(
+        '/rooms/:roomId/participants/:userId',
+        authentication,
+        isRoomAdmin,
+        changeChatUserRoleHandler
     );
 
     chatRoutes.get(

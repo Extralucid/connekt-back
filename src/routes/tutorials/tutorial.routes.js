@@ -1,5 +1,5 @@
 import router from 'express';
-import { createTutorialHandler, deleteTutorialHandler, getTutorialHandler, listAllDeletedTutorialsHandler, listAllTutorialsHandler, listRecommendedTutorialsHandler, updateTutorialHandler } from '../../controllers/tutorials/tutorial.controller.js';
+import { createTutorialHandler, createTutorialSectionHandler, deleteTutorialHandler, getTutorialHandler, listAllDeletedTutorialsHandler, listAllTutorialsHandler, listRecommendedTutorialsHandler, trackTutorialReadingProgressHandler, updateTutorialHandler, updateTutorialSectionHandler } from '../../controllers/tutorials/tutorial.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
 import { cache } from '../../middlewares/cacheMiddleware.js';
 
@@ -11,6 +11,9 @@ const tutorialRoute = () => {
     authentication,
     createTutorialHandler
   );
+
+  // Update user progress
+  tutorialRoutes.post('/tutorial-progress', authentication, trackTutorialReadingProgressHandler);
   tutorialRoutes.put(
     '/update-tutorial/:id',
     authentication,
@@ -22,7 +25,7 @@ const tutorialRoute = () => {
     cache(60),
     listAllTutorialsHandler
   );
-    tutorialRoutes.get(
+  tutorialRoutes.get(
     '/list-recommended-tutorials',
     authentication,
     cache(60),
@@ -44,6 +47,8 @@ const tutorialRoute = () => {
     authentication,
     deleteTutorialHandler
   );
+  tutorialRoutes.post('/:tutorialId/sections', authentication, createTutorialSectionHandler);
+  tutorialRoutes.put('/sections/:sectionId', authentication, updateTutorialSectionHandler);
 
   return tutorialRoutes;
 };

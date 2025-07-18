@@ -220,6 +220,22 @@ export const listDeletedBooks = async (page = 0,
     }
 };
 
+// 
+export const trackReadingProgress = async ({ bookId, userId, currentPage }) => {
+
+    try {
+        // Save last read page
+        await db.userBook.upsert({
+            where: { userId_bookId: { userId, currentPage } },
+            update: { progress: currentPage },
+            create: { userId, bookId, progress: currentPage },
+        });
+        return {};
+    } catch (error) {
+        throw new BadRequestError('Failed to track reading');
+    }
+};
+
 // Mettre à jour une book
 export const updateBook = async ({ body, user, book_id }) => {
     try {

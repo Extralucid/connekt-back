@@ -1,6 +1,6 @@
 import appResponse from '../../../lib/appResponse.js';
 
-import { createBook, deleteBook, getBookById, listDeletedBooks, listBooks, updateBook, listRecommendedBooks } from '../../services/books/book.services.js';
+import { createBook, deleteBook, getBookById, listDeletedBooks, listBooks, updateBook, listRecommendedBooks, trackReadingProgress } from '../../services/books/book.services.js';
 
 
 export const createBookHandler = async (req, res) => {
@@ -9,6 +9,15 @@ export const createBookHandler = async (req, res) => {
     const response = await createBook({ body, user });
 
     res.send(appResponse('Book created successfully', response));
+};
+
+export const trackBookReadingProgressHandler = async (req, res) => {
+    const userId  = req.user.id;
+    const { bookId, currentPage } = req.body;
+
+    const response = await trackReadingProgress({ bookId, userId, currentPage });
+
+    res.send(appResponse('Book track created successfully', response));
 };
 
 export const updateBookHandler = async (req, res) => {

@@ -1,12 +1,30 @@
 import appResponse from '../../../lib/appResponse.js';
 
-import { createTutorial, deleteTutorial, getTutorialById, listDeletedTutorials, listRecommendedTutorials, listTutorials, updateTutorial } from '../../services/tutorials/tutorial.services.js';
+import { createSection, createTutorial, deleteTutorial, getTutorialById, listDeletedTutorials, listRecommendedTutorials, listTutorials, trackTutorialProgress, updateSection, updateTutorial } from '../../services/tutorials/tutorial.services.js';
 
+
+export const createTutorialSectionHandler = async (req, res) => {
+    const tutorialId = req.params.tutorialId;
+    const { title, content, videoUrl, order } = req.body;
+
+    const response = await createSection({ title, content, videoUrl, order, tutorialId });
+
+    res.send(appResponse('Tutorial section created successfully', response));
+};
 
 export const createTutorialHandler = async (req, res) => {
     const { body, user } = req;
 
     const response = await createTutorial({ body, user });
+
+    res.send(appResponse('Tutorial created successfully', response));
+};
+
+export const trackTutorialReadingProgressHandler = async (req, res) => {
+    const userId  = req.user.id;
+    const { tutorialId, completedSectionId } = req.body;
+
+    const response = await trackTutorialProgress({ tutorialId, userId, completedSectionId });
 
     res.send(appResponse('Tutorial created successfully', response));
 };
@@ -18,6 +36,14 @@ export const updateTutorialHandler = async (req, res) => {
   const response = await updateTutorial({ body, user, tutorial_id });
 
   res.send(appResponse('Tutorial updated successfully', response));
+};
+export const updateTutorialSectionHandler = async (req, res) => {
+  const { body, user } = req;
+  const sectionId = req.params.sectionId;
+
+  const response = await updateSection(sectionId, body);
+
+  res.send(appResponse('Tutorial section  updated successfully', response));
 };
 export const listAllTutorialsHandler = async (req, res) => {
   const { page = 1, limit = 10, search = "", order = [] } = req.query;

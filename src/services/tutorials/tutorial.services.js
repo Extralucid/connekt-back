@@ -71,6 +71,45 @@ export const createTutorial = async ({ body, user }) => {
     }
 };
 
+export const createSection = async ({ title, content, videoUrl, order, tutorialId }) => {
+    try {
+        const section = await db.tutorialSection.create({
+            data: { tutorialId, title, content, videoUrl, order },
+        });
+
+        return section;
+    } catch (error) {
+        throw new BadRequestError(err.message)
+    }
+};
+
+export const updateSection = async (sectionId, body) => {
+    try {
+        const updatedSection = await db.tutorialSection.update({
+            where: { tutsection_id: sectionId },
+            data: body,
+        });
+        return updatedSection;
+    } catch (error) {
+        throw new BadRequestError(err.message)
+    }
+};
+
+export const trackTutorialProgress = async ({ tutorialId, userId, completedSectionId }) => {
+
+    try {
+        // Mark section as completed
+        await db.tutorialProgress.upsert({
+            where: { userId_tutorialId: { userId, tutorialId } },
+            update: { sectionId: completedSectionId },
+            create: { userId, tutorialId, sectionId: completedSectionId },
+        });
+        return {};
+    } catch (error) {
+        throw new BadRequestError('Failed to track reading');
+    }
+};
+
 export const listTutorials = async (page = 0,
     limit = 10,
     search = "",
@@ -125,7 +164,7 @@ export const listTutorials = async (page = 0,
 export const listRecommendedTutorials = async (page = 0,
     limit = 10,
     search = "",
-    order = [], user=null) => {
+    order = [], user = null) => {
     try {
         const offset = Math.max(0, (page - 1) * limit);
         const sort = _.isEmpty(order) ? [] : JSON.parse(_.first(order));

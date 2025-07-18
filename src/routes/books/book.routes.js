@@ -1,5 +1,5 @@
 import router from 'express';
-import { createBookHandler, deleteBookHandler, getBookHandler, listAllDeletedBooksHandler, listAllBooksHandler, updateBookHandler, listRecommendedBooksHandler } from '../../controllers/books/book.controller.js';
+import { createBookHandler, deleteBookHandler, getBookHandler, listAllDeletedBooksHandler, listAllBooksHandler, updateBookHandler, listRecommendedBooksHandler, trackBookReadingProgressHandler } from '../../controllers/books/book.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
 import { cache } from '../../middlewares/cacheMiddleware.js';
 
@@ -16,13 +16,15 @@ const bookRoute = () => {
     authentication,
     updateBookHandler
   );
+  // User-specific: Track reading progress
+  bookRoutes.post('/user-books', authentication, trackBookReadingProgressHandler);
   bookRoutes.get(
     '/list-all-books',
     authentication,
     cache(60),
     listAllBooksHandler
   );
-    bookRoutes.get(
+  bookRoutes.get(
     '/list-recommended-books',
     authentication,
     cache(60),

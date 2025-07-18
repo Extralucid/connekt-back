@@ -1,6 +1,6 @@
 import appResponse from '../../../lib/appResponse.js';
 
-import { createInvite, acceptInvite, createChatRoom, getChatMessages, addToGroup, removeFromGroup, getChatRooms, getRoomById } from '../../services/chat/chat.services.js';
+import { createInvite, acceptInvite, createChatRoom, getChatMessages, addToGroup, removeFromGroup, getChatRooms, getRoomById, changeChatUserRole } from '../../services/chat/chat.services.js';
 import { getAuditLogs, logChatAction } from '../../services/log/auditLogService.js';
 
 
@@ -12,6 +12,18 @@ export const createInviteHandler = async (req, res) => {
     const response = await createInvite({ roomId, userId, expiresAt, maxUses });
 
     res.send(appResponse('Chat Invite created successfully', response));
+};
+
+export const changeChatUserRoleHandler = async (req, res) => {
+    const { body, user } = req;
+    const creatorId = user.id;
+    const roomId = req.params.roomId;
+    const userId = req.params.userId;
+    const { newRole, oldRole } = body;
+
+    const response = await changeChatUserRole({ roomId, creatorId, userId, oldRole, newRole });
+
+    res.send(appResponse('Chat user role created successfully', response));
 };
 export const getChatRoomHandler = async (req, res) => {
     const room_id = req.params.id;
