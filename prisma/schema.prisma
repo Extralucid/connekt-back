@@ -14,38 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Profession {
-  idprofession           String   @id @unique @default(uuid())
-  codeprofession         String   @unique @db.VarChar(255)
-  libelleprofession      String   @unique @db.VarChar(255)
-  descriptionsprofession String?
-  published              Boolean? @default(true) @db.Boolean
-  isDeleted              Boolean? @default(false) @db.Boolean
-  created_at             DateTime @default(now())
-  updated_at             DateTime @updatedAt
-}
-
-model Prestataire {
-  idprestataire          String   @id @unique @default(uuid())
-  codeprestataire        String   @unique @db.VarChar(255)
-  nomprestataire         String   @unique @db.VarChar(255)
-  responsableprestataire String?  @db.VarChar(255)
-  emailprestataire       String?  @db.VarChar(255)
-  siteprestataire        String?  @db.VarChar(255)
-  phoneprestataire       String?  @db.VarChar(255)
-  faxprestataire         String?  @db.VarChar(255)
-  longitudeprestataire   String?  @db.VarChar(255)
-  latitudeprestataire    String?  @db.VarChar(255)
-  descriptionprestataire String?
-  adresseprestataire     String?
-  published              Boolean? @default(true) @db.Boolean
-  isDeleted              Boolean? @default(false) @db.Boolean
-  created_at             DateTime @default(now())
-  updated_at             DateTime @updatedAt
-
-  User User[]
-}
-
 model MethodePaiement {
   idmethode                 String   @id @unique @default(uuid())
   nomMethode                String   @unique @db.VarChar(255)
@@ -118,8 +86,6 @@ model User {
   email_verified_at   DateTime?      @db.Date
   avatar              String?        @db.VarChar(250)
   usession            String?        @db.VarChar(250)
-  prestataireId       String?
-  Prestataire         Prestataire?   @relation(fields: [prestataireId], references: [idprestataire], onDelete: NoAction)
   refreshTokens       RefreshToken[]
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt

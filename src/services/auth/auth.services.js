@@ -36,12 +36,12 @@ export const getUserProfileData = async (userId) => {
 }
 
 
-function findUserByEmail(email) {
+function findUserByEmail(email, phone) {
     return db.user.findFirst({
         where: {
             OR: [
                 { email: email },
-                { phone: email }
+                { phone: phone }
             ],
         },
     });
@@ -140,28 +140,28 @@ export const revokeToken = async ({ body }) => {
 
 export const signUpMemberAuthentication = async ({ body }) => {
     try {
-        console.log(body);
+        console.log(body.email);
 
         if (!body.email || !body.password) {
             throw new BadRequestError('You must provide an email and a password.');
         }
 
-        const existingUser = await findUserByEmail(body.email);
+        const existingUser = await findUserByEmail(body.email, body.phone);
 
         if (existingUser) {
             throw new BadRequestError('Email already in use.');
         }
-        const ressource = await findRessourceByCode('ADMIN');
+        //const ressource = (body.ressourceId)?  await db.r.findUnique({where: {idressource: body.ressourceId}}) : await db.ressource.findFirst({where: {rcode: 'ADMIN'}});
         const user = await db.user.create({
             data: {
                 email: body.email,
                 phone: body.phone,
-                password: await bcrypt.hash(body.password, 12),
+                pwd_hash: await bcrypt.hash(body.password, 12),
+                password_hash:await bcrypt.hash(body.password, 12),
                 codeuser: `USR-${await codeGenerator(10, 'ABCDEFGHIJKLMN1234567890')}`,
                 unom: body.unom,
                 uprenom: body.uprenom,
                 avatar: body.avatar,
-                ressourceId: ressource.idressource,
                 isDeleted: false,
             }
         });
@@ -175,7 +175,7 @@ export const signUpMemberAuthentication = async ({ body }) => {
             refreshToken,
         };
     } catch (err) {
-        //console.log(err);
+        console.log(err);
         throw new BadRequestError(err.message);
     }
 };
@@ -224,7 +224,7 @@ export const signInMemberAuthentication = async ({ body }) => {
             throw new BadRequestError('Invalid login credentials.');
         }
 
-        const validPassword = await bcrypt.compare(password, existingUser.password);
+        const validPassword = await bcrypt.compare(password, existingUser.pwd_hash);
         if (!validPassword) {
             throw new BadRequestError('Invalid login credentials.');
         }
