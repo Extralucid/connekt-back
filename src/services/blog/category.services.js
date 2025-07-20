@@ -1,12 +1,9 @@
 import db from '../../db/connection.js';
 import {
     BadRequestError,
-    DuplicateError,
-    InternalServerError,
     NotFoundError
 } from '../../../lib/appErrors.js';
 import _ from "lodash";
-import { codeGenerator } from '../../utils/codeGenerator.js';
 import redisClient from '../../config/redis.js';
 
 // soft delete tokens after usage.

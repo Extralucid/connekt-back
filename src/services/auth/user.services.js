@@ -1,6 +1,7 @@
 import { BadRequestError } from '../../../lib/appErrors.js';
 import bcrypt from 'bcrypt';
 import db from '../../db/connection.js';
+import _ from "lodash";
 import { codeGenerator } from '../../utils/codeGenerator.js';
 import redisClient from '../../config/redis.js';
 
@@ -50,9 +51,6 @@ export async function getUserById(id) {
 
         const user = await db.user.findUnique({
             where: { id: id },
-            include: {
-                Prestataire: true
-            }
         }); // Utilise Prisma avec findUnique
 
         if (!user) {
@@ -82,9 +80,7 @@ export async function createUserData() {
 export async function updateUserData(id) {
     try {
         const user = await db.user.findUnique({
-            where: { id: id }, include: {
-                Prestataire: true
-            }
+            where: { id: id }
         }); // Utilise Prisma avec findUnique
 
         if (!user) {
@@ -93,9 +89,6 @@ export async function updateUserData(id) {
 
         return {
             user: user,
-            ressources: await db.ressource.findMany({ where: { isDeleted: false } }),
-            agences: await db.agence.findMany({ where: { isDeleted: false } }),
-            prestataires: await db.prestataire.findMany({ where: { isDeleted: false } })
         };
     } catch (err) {
         throw new BadRequestError(err.message);
@@ -212,11 +205,6 @@ export const listUsers = async (page = 0,
             take: Number(limit),
             orderBy: {
                 [orderKey]: orderUser,
-            },
-            include: {
-                Prestataire: true,
-                Agence: true,
-                Ressource: true
             }
         });
 
@@ -226,11 +214,6 @@ export const listUsers = async (page = 0,
                     { isDeleted: false },
                     search ? { codeuser: { contains: search, mode: "insensitive" } } : {},
                 ],
-            },
-            include: {
-                Prestataire: true,
-                Agence: true,
-                Ressource: true
             }
         });
 
@@ -267,11 +250,6 @@ export const listDeletedUsers = async (page = 0,
                     search ? { codeuser: { contains: search, mode: "insensitive" } } : {},
                 ],
             },
-            include: {
-                Prestataire: true,
-                Agence: true,
-                Ressource: true
-            },
             skip: Number(offset),
             take: Number(limit),
             orderBy: {
@@ -284,12 +262,7 @@ export const listDeletedUsers = async (page = 0,
                 OR: [
                     { isDeleted: true },
                     search ? { codeuser: { contains: search, mode: "insensitive" } } : {},
-                ],
-                include: {
-                    Prestataire: true,
-                    Agence: true,
-                    Ressource: true
-                }
+                ]
             },
         });
 
