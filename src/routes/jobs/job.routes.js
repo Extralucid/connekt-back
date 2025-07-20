@@ -1,5 +1,5 @@
 import router from 'express';
-import { createJobHandler, deleteJobHandler, getJobHandler, listAllDeletedJobsHandler, listAllJobsHandler, updateJobHandler } from '../../controllers/jobs/job.controller.js';
+import { createJobAlertHandler, createJobHandler, createJobTrackHandler, deleteJobHandler, getJobHandler, listAllDeletedJobsHandler, listAllJobsHandler, listRecommendedJobsHandler, updateJobHandler } from '../../controllers/jobs/job.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
 import { cache } from '../../middlewares/cacheMiddleware.js';
 
@@ -11,6 +11,16 @@ const jobRoute = () => {
     authentication,
     createJobHandler
   );
+  jobRoutes.post(
+    '/create-new-job-alert',
+    authentication,
+    createJobAlertHandler
+  );
+   jobRoutes.post(
+    '/:id/views',
+    authentication,
+    createJobTrackHandler
+  );
   jobRoutes.put(
     '/update-job/:id',
     authentication,
@@ -21,6 +31,12 @@ const jobRoute = () => {
     authentication,
     cache(60),
     listAllJobsHandler
+  );
+    jobRoutes.get(
+    '/list-recommended-jobs',
+    authentication,
+    cache(60),
+    listRecommendedJobsHandler
   );
   jobRoutes.get(
     '/list-deleted-jobs',

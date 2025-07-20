@@ -54,7 +54,7 @@ export async function getReplyById({reply_id}) {
 
 export const createReply = async ({ body, user }) => {
     try {
-        const createdreply = await db.reply.create({ data: body });
+        const createdreply = await db.reply.create({ data: body, include: {votes: true} });
         return createdreply;
     } catch (err) {
         throw new BadRequestError(err.message)
@@ -166,7 +166,8 @@ export const updateReply = async ({ body, user, reply_id }) => {
 
         const updatedreply = await db.reply.update({
             where: { reply_id }, // Utiliser l'ID pour le recherche
-            data: body
+            data: body,
+            include: {votes: true} 
         });
         if (!updatedreply) {
             throw new BadRequestError("reply non trouvée");

@@ -14,6 +14,14 @@ import jobRoute from './jobs/job.routes.js';
 import skillRoute from './jobs/skill.routes.js';
 import applicationRoute from './jobs/application.routes.js';
 
+//book routes imports
+import bookCategorieRoute from './books/bookCategory.routes.js';
+import bookRoute from './books/book.routes.js';
+
+//tutorial routes imports
+import tutorialCategorieRoute from './tutorials/tutorialCategory.routes.js';
+import tutorialRoute from './tutorials/tutorial.routes.js';
+
 //forum
 import forumRoute from './forum/forum.routes.js';
 import topicRoute from './forum/topic.routes.js';
@@ -47,6 +55,13 @@ export default (router) => {
 
   //chat routes
   router.use('/chat', chatRoute());
-    router.use('/podcast', podcastRoute());
+  router.use('/podcast', podcastRoute());
+
+  //books routes
+  router.use('/book', bookRoute());
+  router.use('/book-catgory', bookCategorieRoute());
+  //tutorials routes
+  router.use('/tutorial', tutorialRoute());
+  router.use('/tutorial-catgory', tutorialCategorieRoute());
   return router;
 };

@@ -38,6 +38,7 @@ export async function getTopicById({topic_id}) {
         
         const topic = await db.topic.findUnique({
             where: { topic_id: topic_id },
+            include: {replies: true}
         }); // Utilise Prisma avec findUnique
 
         if (!topic) {
@@ -54,7 +55,7 @@ export async function getTopicById({topic_id}) {
 
 export const createTopic = async ({ body, user }) => {
     try {
-        const createdtopic = await db.topic.create({ data: body });
+        const createdtopic = await db.topic.create({ data: body, include: {replies: true} });
         return createdtopic;
     } catch (err) {
         throw new BadRequestError(err.message)
@@ -166,7 +167,8 @@ export const updateTopic = async ({ body, user, topic_id }) => {
 
         const updatedtopic = await db.topic.update({
             where: { topic_id }, // Utiliser l'ID pour le recherche
-            data: body
+            data: body,
+            include: {replies: true}
         });
         if (!updatedtopic) {
             throw new BadRequestError("topic non trouvée");

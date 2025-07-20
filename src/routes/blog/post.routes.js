@@ -1,5 +1,5 @@
 import router from 'express';
-import { createPostHandler, deletePostHandler, getPostHandler, listAllDeletedPostsHandler, listAllPostsHandler, updatePostHandler } from '../../controllers/blog/post.controller.js';
+import { createPostHandler, deletePostHandler, getPostHandler, listAllDeletedPostsHandler, listAllPostsHandler, listRecommendedPostsHandler, updatePostHandler } from '../../controllers/blog/post.controller.js';
 import { authentication } from '../../middlewares/authentication.js';
 import { cache } from '../../middlewares/cacheMiddleware.js';
 
@@ -21,6 +21,12 @@ const postRoute = () => {
     authentication,
     cache(60),
     listAllPostsHandler
+  );
+  postRoutes.get(
+    '/list-recommended-posts',
+    authentication,
+    cache(60),
+    listRecommendedPostsHandler
   );
   postRoutes.get(
     '/list-deleted-posts',

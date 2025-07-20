@@ -1,11 +1,9 @@
 import { BadRequestError } from '../../../lib/appErrors.js';
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
-import { generateTokens } from '../../utils/jwt.js';
 import db from '../../db/connection.js';
+import _ from "lodash";
 import { codeGenerator } from '../../utils/codeGenerator.js';
-import { hashToken } from '../../utils/hashToken.js';
+import redisClient from '../../config/redis.js';
 
 
 // soft delete tokens after usage.
@@ -53,9 +51,6 @@ export async function getUserById(id) {
 
         const user = await db.user.findUnique({
             where: { id: id },
-            include: {
-                Prestataire: true
-            }
         }); // Utilise Prisma avec findUnique
 
         if (!user) {
@@ -85,9 +80,7 @@ export async function createUserData() {
 export async function updateUserData(id) {
     try {
         const user = await db.user.findUnique({
-            where: { id: id }, include: {
-                Prestataire: true
-            }
+            where: { id: id }
         }); // Utilise Prisma avec findUnique
 
         if (!user) {
@@ -96,21 +89,66 @@ export async function updateUserData(id) {
 
         return {
             user: user,
-            ressources: await db.ressource.findMany({ where: { isDeleted: false } }),
-            agences: await db.agence.findMany({ where: { isDeleted: false } }),
-            prestataires: await db.prestataire.findMany({ where: { isDeleted: false } })
         };
     } catch (err) {
         throw new BadRequestError(err.message);
     }
 }
 
+export const submitReview = async (body, userId) => {
+    const { employerId, rating, title, review, pros, cons } = body;
+    try {
+        const newReview = await db.companyReview.create({
+            data: {
+                employerId,
+                userId: userId,
+                rating,
+                title,
+                review,
+                pros,
+                cons,
+                isApproved: false, // Await moderation
+            },
+        });
+
+        // Clear cached reviews for this employer
+        await redisClient.del(`reviews:employer:${employerId}`);
+        return newReview;
+    } catch (error) {
+        throw new BadRequestError('Failed to submit review');
+    }
+};
+
+// reviewController.js
+export const getEmployerReviews = async ({ userId }) => {
+    const cacheKey = `reviews:employer:${id}`;
+    try {
+        // Check cache
+        const cachedReviews = await redisClient.get(cacheKey);
+        if (cachedReviews) return JSON.parse(cachedReviews);
+
+        const reviews = await db.companyReview.findMany({
+            where: {
+                employerId: Number(userId),
+                isApproved: true, // Only show approved reviews
+            },
+            include: { user: true },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        // Cache for 1 hour
+        await redisClient.setEx(cacheKey, 3600, JSON.stringify(reviews));
+        return reviews;
+    } catch (error) {
+        throw new BadRequestError('Failed to fetch reviews');
+    }
+};
 
 
 export const createUser = async ({ body }) => {
     try {
         console.log(body);
-        
+
         if (!body.email || !body.password) {
             throw new BadRequestError('You must provide an email and a password.');
         }
@@ -167,11 +205,6 @@ export const listUsers = async (page = 0,
             take: Number(limit),
             orderBy: {
                 [orderKey]: orderUser,
-            },
-            include: {
-                Prestataire: true,
-                Agence: true,
-                Ressource: true
             }
         });
 
@@ -181,11 +214,6 @@ export const listUsers = async (page = 0,
                     { isDeleted: false },
                     search ? { codeuser: { contains: search, mode: "insensitive" } } : {},
                 ],
-            },
-            include: {
-                Prestataire: true,
-                Agence: true,
-                Ressource: true
             }
         });
 
@@ -222,11 +250,6 @@ export const listDeletedUsers = async (page = 0,
                     search ? { codeuser: { contains: search, mode: "insensitive" } } : {},
                 ],
             },
-            include: {
-                Prestataire: true,
-                Agence: true,
-                Ressource: true
-            },
             skip: Number(offset),
             take: Number(limit),
             orderBy: {
@@ -239,12 +262,7 @@ export const listDeletedUsers = async (page = 0,
                 OR: [
                     { isDeleted: true },
                     search ? { codeuser: { contains: search, mode: "insensitive" } } : {},
-                ],
-                include: {
-                    Prestataire: true,
-                    Agence: true,
-                    Ressource: true
-                }
+                ]
             },
         });
 

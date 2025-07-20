@@ -25,19 +25,23 @@ export const getUserProfileData = async (userId) => {
             id: userId
         },
         include: {
-            Prestataire: true
+            preferences: {
+                include: { bookCategories: true, tutorialTopics: true, jobCategories: true, blogCategories: true }
+            }
         }
     });
     delete userData.password;
     return userData;
 
 }
-function findUserByEmail(email) {
+
+
+function findUserByEmail(email, phone) {
     return db.user.findFirst({
         where: {
             OR: [
                 { email: email },
-                { phone: email }
+                { phone: phone }
             ],
         },
     });
@@ -136,28 +140,28 @@ export const revokeToken = async ({ body }) => {
 
 export const signUpMemberAuthentication = async ({ body }) => {
     try {
-        console.log(body);
+        console.log(body.email);
 
         if (!body.email || !body.password) {
             throw new BadRequestError('You must provide an email and a password.');
         }
 
-        const existingUser = await findUserByEmail(body.email);
+        const existingUser = await findUserByEmail(body.email, body.phone);
 
         if (existingUser) {
             throw new BadRequestError('Email already in use.');
         }
-        const ressource = await findRessourceByCode('ADMIN');
+        //const ressource = (body.ressourceId)?  await db.r.findUnique({where: {idressource: body.ressourceId}}) : await db.ressource.findFirst({where: {rcode: 'ADMIN'}});
         const user = await db.user.create({
             data: {
                 email: body.email,
                 phone: body.phone,
-                password: await bcrypt.hash(body.password, 12),
+                pwd_hash: await bcrypt.hash(body.password, 12),
+                password_hash:await bcrypt.hash(body.password, 12),
                 codeuser: `USR-${await codeGenerator(10, 'ABCDEFGHIJKLMN1234567890')}`,
                 unom: body.unom,
                 uprenom: body.uprenom,
                 avatar: body.avatar,
-                ressourceId: ressource.idressource,
                 isDeleted: false,
             }
         });
@@ -171,31 +175,35 @@ export const signUpMemberAuthentication = async ({ body }) => {
             refreshToken,
         };
     } catch (err) {
-        //console.log(err);
+        console.log(err);
         throw new BadRequestError(err.message);
     }
 };
 
 // service
 export const savePreferences = async ({ body, user }) => {
-    const { bookCategories, tutorialTopics, language, notifyNewContent } = body;
+    const { bookCategories, tutorialTopics, jobCategories, blogCategories, language, notifyNewContent } = body;
     const userId = user.id;
 
     // Create or update preferences
-    await user.userPreference.upsert({
+    await db.userPreference.upsert({
         where: { userId },
         create: {
             userId,
             language,
             notifyNewContent,
-            bookCategories: { connect: bookCategories.map(id => ({ bookcat_id: id })) },
-            tutorialTopics: { connect: tutorialTopics.map(id => ({ tutcat_id: id })) },
+            bookCategories: { connect: bookCategories.map(id => ({ id })) },
+            tutorialTopics: { connect: tutorialTopics.map(id => ({ id })) },
+            jobCategories: { connect: jobCategories.map(id => ({ id })) },
+            blogCategories: { connect: blogCategories.map(id => ({ id })) },
         },
         update: {
             language,
             notifyNewContent,
-            bookCategories: { set: bookCategories.map(id => ({ bookcat_id: id })) },
-            tutorialTopics: { set: tutorialTopics.map(id => ({ tutcat_id: id })) },
+            bookCategories: { set: bookCategories.map(id => ({ id })) },
+            tutorialTopics: { set: tutorialTopics.map(id => ({ id })) },
+            jobCategories: { connect: jobCategories.map(id => ({ id })) },
+            blogCategories: { connect: blogCategories.map(id => ({ id })) },
         },
     });
 
@@ -216,7 +224,7 @@ export const signInMemberAuthentication = async ({ body }) => {
             throw new BadRequestError('Invalid login credentials.');
         }
 
-        const validPassword = await bcrypt.compare(password, existingUser.password);
+        const validPassword = await bcrypt.compare(password, existingUser.pwd_hash);
         if (!validPassword) {
             throw new BadRequestError('Invalid login credentials.');
         }

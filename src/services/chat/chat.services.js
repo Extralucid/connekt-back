@@ -1,12 +1,9 @@
 import db from '../../db/connection.js';
 import {
     BadRequestError,
-    DuplicateError,
-    InternalServerError,
     NotFoundError
 } from '../../../lib/appErrors.js';
 import _ from "lodash";
-import { codeGenerator } from '../../utils/codeGenerator.js';
 import redisClient from '../../config/redis.js';
 import pkg from 'bcryptjs';
 import { logChatAction } from '../log/auditLogService.js';
@@ -27,6 +24,24 @@ export const createInvite = async ({ roomId, creatorId, expiresAt, maxUses }) =>
         });
         io.to(roomId).emit('invite-created', invite)
         return `${process.env.FRONTEND_URL}/join/${token}`; // Return full URL
+    } catch (err) {
+        throw new BadRequestError(err.message)
+    }
+};
+
+export const changeChatUserRole = async ({ roomId, creatorId, userId, oldRole, newRole }) => {
+    try {
+        // In a new `changeRole` controller:
+        await db.chatParticipant.update({
+            where: { userId_roomId: { userId, roomId } },
+            data: { role: newRole },
+        });
+
+        await logChatAction('ROLE_CHANGED', roomId, creatorId, {
+            targetId: userId,
+            metadata: { oldRole: oldRole, newRole: newRole },
+        });
+        return {};
     } catch (err) {
         throw new BadRequestError(err.message)
     }

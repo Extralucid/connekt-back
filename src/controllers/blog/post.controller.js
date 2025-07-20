@@ -1,6 +1,6 @@
 import appResponse from '../../../lib/appResponse.js';
 
-import { createPost, deletePost, getPostById, listDeletedPosts, listPosts, updatePost } from '../../services/blog/post.services.js';
+import { createPost, deletePost, getPostById, listDeletedPosts, listPosts, listRecommandedPosts, updatePost } from '../../services/blog/post.services.js';
 
 
 export const createPostHandler = async (req, res) => {
@@ -23,6 +23,14 @@ export const listAllPostsHandler = async (req, res) => {
   const { page = 1, limit = 10, search = "", order = [] } = req.query;
 
   const response = await listPosts(Number(page), Number(limit), search, order);
+
+  res.send(appResponse('Posts listed successfully', response));
+};
+export const listRecommendedPostsHandler = async (req, res) => {
+  const { page = 1, limit = 10, search = "", order = [] } = req.query;
+  const user  = req.user;
+
+  const response = await listRecommandedPosts(Number(page), Number(limit), search, order);
 
   res.send(appResponse('Posts listed successfully', response));
 };

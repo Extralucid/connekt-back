@@ -36,7 +36,7 @@ export async function getPostById({ post_id }) {
         const cachedPost = await redisClient.get(cacheKey);
 
         if (cachedPost) return JSON.parse(cachedPost);
-        
+
 
         const post = await db.post.findUnique({
             where: { post_id: post_id },
@@ -124,6 +124,56 @@ export const listPosts = async (page = 0,
 
     }
 };
+
+
+export const listRecommandedPosts = async (page = 0,
+    limit = 10,
+    search = "",
+    order = [], user = null) => {
+    try {
+        const offset = Math.max(0, (page - 1) * limit);
+        const sort = _.isEmpty(order) ? [] : JSON.parse(_.first(order));
+        const orderKey = _.isEmpty(sort) ? "name" : sort.id || "name";
+        const orderDirection = _.isEmpty(sort)
+            ? "desc"
+            : sort.desc
+                ? "desc"
+                : "asc";
+        const posts = await db.post.findMany({
+            where: {
+                categories: {
+                    some: { id: { in: user.preferences.blogCategories } },
+                },
+            },
+            include: { categories: { include: { category: true } }, tags: true },
+            skip: Number(offset),
+            take: Number(limit),
+            orderBy: {
+                [orderKey]: orderDirection,
+            },
+        });
+
+        const countTotal = await db.post.count({
+            where: {
+                categories: {
+                    some: { id: { in: user.preferences.blogCategories } },
+                },
+            },
+        });
+
+        return {
+            data: posts,
+            totalRow: countTotal,
+            totalPage: Math.ceil(countTotal / limit),
+        };
+
+    } catch (err) {
+        console.log(err);
+        throw new BadRequestError(err.message)
+
+    }
+};
+
 
 export const listDeletedPosts = async (page = 0,
     limit = 10,

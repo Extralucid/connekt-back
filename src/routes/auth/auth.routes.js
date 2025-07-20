@@ -11,11 +11,11 @@ const authRoute = () => {
   //authentification
   authRoutes.post(
     '/signup',
-    validateData(registerSchema),
+    //validateData(registerSchema),
     signUpMemberAuthenticationHandler
   );
   authRoutes.post(
-    '/preferences',
+    '/onboarding/preferences',
     authentication,
     preferenceHandler
   );

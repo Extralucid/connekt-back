@@ -1,12 +1,9 @@
 import db from '../../db/connection.js';
 import {
     BadRequestError,
-    DuplicateError,
-    InternalServerError,
     NotFoundError
 } from '../../../lib/appErrors.js';
 import _ from "lodash";
-import { codeGenerator } from '../../utils/codeGenerator.js';
 import redisClient from '../../config/redis.js';
 
 // soft delete tokens after usage.
@@ -36,7 +33,7 @@ export async function getApplicationById({ app_id }) {
         const cachedApplication = await redisClient.get(cacheKey);
 
         if (cachedApplication) return JSON.parse(cachedApplication);
-        
+
 
         const application = await db.application.findUnique({
             where: { app_id: app_id },
@@ -63,13 +60,27 @@ export const createApplication = async ({ body, user }) => {
                 documents: body.docIds?.length ? {
                     create: body.docIds.map((id) => ({ docId: id })),
                 } : undefined,
-                
+
             },
         });
         return createdapplication;
     } catch (err) {
         throw new BadRequestError(err.message)
 
+    }
+};
+
+// 
+export const getApplicationTimeline = async ({appId}) => {
+    try {
+        const timeline = await db.applicationEvent.findMany({
+            where: { applicationId: Number(appId) },
+            orderBy: { createdAt: 'asc' },
+            include: { createdBy: { select: { name: true } } }, // Show actor name
+        });
+        return timeline;
+    } catch (error) {
+        throw new BadRequestError('Failed to fetch timeline' );
     }
 };
 

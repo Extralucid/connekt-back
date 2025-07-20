@@ -7,7 +7,7 @@ import _ from "lodash";
 import redisClient from '../../config/redis.js';
 
 // soft delete tokens after usage.
-export const deleteBook = async ({ tutorial_id }) => {
+export const deleteTutorial = async ({ tutorial_id }) => {
 
     const tutorial = await db.tutorial.findUnique({
         where: { tutorial_id: tutorial_id },
@@ -27,17 +27,17 @@ export const deleteBook = async ({ tutorial_id }) => {
 }
 
 // Obtenir une tutorial par ID
-export async function getBookById({ tutorial_id }) {
+export async function getTutorialById({ tutorial_id }) {
     try {
         const cacheKey = `cache:tutorial:${tutorial_id}`;
-        const cachedBook = await redisClient.get(cacheKey);
+        const cachedTutorial = await redisClient.get(cacheKey);
 
-        if (cachedBook) return JSON.parse(cachedBook);
+        if (cachedTutorial) return JSON.parse(cachedTutorial);
 
 
         const tutorial = await db.tutorial.findUnique({
             where: { tutorial_id: tutorial_id },
-            include: { categories: true }
+            include: { categories: true, sections: true }
         }); // Utilise Prisma avec findUnique
 
         if (!tutorial) {
@@ -52,7 +52,7 @@ export async function getBookById({ tutorial_id }) {
 }
 
 
-export const createBook = async ({ body, user }) => {
+export const createTutorial = async ({ body, user }) => {
     try {
         const createdtutorial = await db.tutorial.create({
             data: {
@@ -71,7 +71,46 @@ export const createBook = async ({ body, user }) => {
     }
 };
 
-export const listBooks = async (page = 0,
+export const createSection = async ({ title, content, videoUrl, order, tutorialId }) => {
+    try {
+        const section = await db.tutorialSection.create({
+            data: { tutorialId, title, content, videoUrl, order },
+        });
+
+        return section;
+    } catch (error) {
+        throw new BadRequestError(err.message)
+    }
+};
+
+export const updateSection = async (sectionId, body) => {
+    try {
+        const updatedSection = await db.tutorialSection.update({
+            where: { tutsection_id: sectionId },
+            data: body,
+        });
+        return updatedSection;
+    } catch (error) {
+        throw new BadRequestError(err.message)
+    }
+};
+
+export const trackTutorialProgress = async ({ tutorialId, userId, completedSectionId }) => {
+
+    try {
+        // Mark section as completed
+        await db.tutorialProgress.upsert({
+            where: { userId_tutorialId: { userId, tutorialId } },
+            update: { sectionId: completedSectionId },
+            create: { userId, tutorialId, sectionId: completedSectionId },
+        });
+        return {};
+    } catch (error) {
+        throw new BadRequestError('Failed to track reading');
+    }
+};
+
+export const listTutorials = async (page = 0,
     limit = 10,
     search = "",
     order = []) => {
@@ -121,7 +160,56 @@ export const listBooks = async (page = 0,
     }
 };
 
-export const listDeletedBooks = async (page = 0,
+
+export const listRecommendedTutorials = async (page = 0,
+    limit = 10,
+    search = "",
+    order = [], user = null) => {
+    try {
+        const offset = Math.max(0, (page - 1) * limit);
+        const sort = _.isEmpty(order) ? [] : JSON.parse(_.first(order));
+        const orderKey = _.isEmpty(sort) ? "title" : sort.id || "title";
+        const orderDirection = _.isEmpty(sort)
+            ? "desc"
+            : sort.desc
+                ? "desc"
+                : "asc";
+        const tutorials = await db.tutorial.findMany({
+            where: {
+                categories: {
+                    some: { id: { in: user.preferences.tutorialCategories } },
+                },
+            },
+            include: { categories: true },
+            skip: Number(offset),
+            take: Number(limit),
+            orderBy: {
+                [orderKey]: orderDirection,
+            },
+        });
+
+        const countTotal = await db.tutorial.count({
+            where: {
+                categories: {
+                    some: { id: { in: user.preferences.tutorialCategories } },
+                },
+            },
+        });
+
+        return {
+            data: tutorials,
+            totalRow: countTotal,
+            totalPage: Math.ceil(countTotal / limit),
+        };
+
+    } catch (err) {
+        console.log(err);
+        throw new BadRequestError(err.message)
+
+    }
+};
+
+export const listDeletedTutorials = async (page = 0,
     limit = 10,
     search = "",
     order = []) => {
@@ -172,7 +260,7 @@ export const listDeletedBooks = async (page = 0,
 };
 
 // Mettre à jour une tutorial
-export const updateBook = async ({ body, user, tutorial_id }) => {
+export const updateTutorial = async ({ body, user, tutorial_id }) => {
     try {
 
         const updatedtutorial = await db.tutorial.update({

@@ -19,8 +19,8 @@ export const ErrorHandler = function (error, req, res, next) {
     return res.status(error.statusCode).send(appResponse(error.message, null, false));
   }
 
-  if (err instanceof z.ZodError) {
-    return res.status(400).json({ errors: err.errors });
+  if (error instanceof z.ZodError) {
+    return res.status(400).json({ errors: error.message });
   }
 
   if (error instanceof prismaValidationError) {

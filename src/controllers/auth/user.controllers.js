@@ -1,7 +1,7 @@
 import appResponse from '../../../lib/appResponse.js';
 //import env from '../config/env.js';
 
-import { createUser, deleteUser, getUserById, listDeletedUsers, listUsers, updateUser } from '../../services/auth/user.services.js';
+import { createUser, deleteUser, getEmployerReviews, getUserById, listDeletedUsers, listUsers, updateUser } from '../../services/auth/user.services.js';
 
 
 export const createUserHandler = async (req, res) => {
@@ -10,6 +10,14 @@ export const createUserHandler = async (req, res) => {
     const response = await createUser({ body, user });
 
     res.send(appResponse('User created successfully', response));
+};
+
+export const createUserReviewHandler = async (req, res) => {
+    const { body, user } = req;
+
+    const response = await createUser( body, user.id );
+
+    res.send(appResponse('User review created successfully', response));
 };
 
 export const updateUserHandler = async (req, res) => {
@@ -40,6 +48,13 @@ export const getUserHandler = async (req, res) => {
   const response = await getUserById(id);
 
   res.send(appResponse('Users fetched successfully', response));
+};
+export const getUserReviewsHandler = async (req, res) => {
+  const id = req.params.id;
+
+  const response = await getEmployerReviews({id});
+
+  res.send(appResponse('User reviews fetched successfully', response));
 };
 export const deleteUserHandler = async (req, res) => {
   const id = req.params.id;
