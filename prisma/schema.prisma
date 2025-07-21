@@ -76,7 +76,6 @@ model User {
   codeuser            String         @db.VarChar(250)
   unom                String?        @db.VarChar(250)
   uprenom             String?        @db.VarChar(250)
-  password_hash       String?        @db.VarChar(250)
   display_name        String?        @db.VarChar(250)
   registration_date   DateTime?      @db.Date
   last_login          DateTime?      @db.Date
@@ -84,8 +83,8 @@ model User {
   profile_picture_url String?        @db.VarChar(250)
   bio                 String?        @db.Text
   email_verified_at   DateTime?      @db.Date
-  avatar              String?        @db.VarChar(250)
   usession            String?        @db.VarChar(250)
+  role                Role           @default(USER) //(Enum: "draft", "published", "archived")
   refreshTokens       RefreshToken[]
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
@@ -119,7 +118,7 @@ model User {
   tutorials            Tutorial[]
   tutorialProgress     TutorialProgress[]
   preferences          UserPreference?       @relation(fields: [preferenceId], references: [preference_id])
-  preferenceId         String?                  @unique
+  preferenceId         String?               @unique
 
   @@map("users")
 }
@@ -181,7 +180,8 @@ model Post {
   excerpt            String?        @db.VarChar(250) //(Short summary)
   status             PostStatus     @default(DRAFT) //(Enum: "draft", "published", "archived")
   published_date     DateTime?      @db.Date
-  updated_date       DateTime?      @updatedAt @db.Date
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   featured_image_url String?        @db.VarChar(250) //
   view_count         Int?           @default(0)
   Comment            Comment[]
@@ -198,23 +198,28 @@ enum PostStatus {
 }
 
 model Category {
-  category_id  String         @id @unique @default(uuid()) //(PK, Auto-increment)
-  name         String         @db.VarChar(250)
-  slug         String         @unique @db.VarChar(250)
-  description  String?        @db.Text
-  isDeleted    Boolean        @default(false) @db.Boolean
-  PostCategory PostCategory[]
-  users UserPreference[] // Many-to-many with UserPreference
+  category_id String           @id @unique @default(uuid()) //(PK, Auto-increment)
+  name        String           @db.VarChar(250)
+  slug        String           @unique @db.VarChar(250)
+  description String?          @db.Text
+  isDeleted   Boolean          @default(false) @db.Boolean
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  posts       PostCategory[]
+  users       UserPreference[] // Many-to-many with UserPreference
 
   @@map("categories")
 }
 
 model Tag {
-  tag_id    String    @id @unique @default(uuid()) //(PK, Auto-increment)
-  name      String    @db.VarChar(250)
-  slug      String    @unique @db.VarChar(250)
-  isDeleted Boolean   @default(false) @db.Boolean
-  PostTag   PostTag[]
+  tag_id      String    @id @unique @default(uuid()) //(PK, Auto-increment)
+  name        String    @db.VarChar(250)
+  slug        String    @unique @db.VarChar(250)
+  description String?   @db.Text
+  isDeleted   Boolean   @default(false) @db.Boolean
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  Posts       PostTag[]
 
   @@map("tags")
 }
@@ -241,14 +246,15 @@ model PostTag {
 }
 
 model Comment {
-  comment_id   String   @id @unique @default(uuid()) //(PK, Auto-increment)
-  post         Post     @relation(fields: [postId], references: [post_id])
-  postId       String
-  authorId     String
-  author       User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  content      String   @db.Text
-  created_date DateTime @default(now())
-  isApproved   Boolean  @default(true)
+  comment_id String   @id @unique @default(uuid()) //(PK, Auto-increment)
+  post       Post     @relation(fields: [postId], references: [post_id])
+  postId     String
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  isApproved Boolean  @default(true)
 
   parentComment   Comment?  @relation("CommentHierarchy", fields: [parentCommentId], references: [comment_id])
   parentCommentId String?
@@ -260,34 +266,36 @@ model Comment {
 // Forum management */
 
 model Forum {
-  forum_id      String  @id @unique @default(uuid()) //
-  name          String  @db.VarChar(250)
-  slug          String  @unique @db.VarChar(250)
-  description   String  @db.Text
-  parentForum   Forum?  @relation("ForumHierarchy", fields: [parentForumId], references: [forum_id])
+  forum_id      String   @id @unique @default(uuid()) //
+  name          String   @db.VarChar(250)
+  slug          String   @unique @db.VarChar(250)
+  description   String   @db.Text
+  parentForum   Forum?   @relation("ForumHierarchy", fields: [parentForumId], references: [forum_id])
   parentForumId String?
-  displayOrder  Int     @default(0)
-  childForums   Forum[] @relation("ForumHierarchy")
+  displayOrder  Int      @default(0)
+  childForums   Forum[]  @relation("ForumHierarchy")
   topics        Topic[]
-  isDeleted     Boolean @default(false) @db.Boolean
+  isDeleted     Boolean  @default(false) @db.Boolean
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("forums")
 }
 
 model Topic {
-  topic_id     String      @id @unique @default(uuid()) // (PK, Auto-increment)
-  forum        Forum       @relation(fields: [forumId], references: [forum_id])
-  forumId      String
-  authorId     String
-  author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  title        String      @db.VarChar(250)
-  slug         String      @unique @db.VarChar(250)
-  content      String      @db.Text
-  status       TopicStatus @default(OPEN) //(Enum: "open", "closed", "pinned", "archived")
-  created_date DateTime    @default(now())
-  updated_date DateTime    @updatedAt
-  view_count   Int?        @default(0)
-  replies      Reply[]
+  topic_id   String      @id @unique @default(uuid()) // (PK, Auto-increment)
+  forum      Forum       @relation(fields: [forumId], references: [forum_id])
+  forumId    String
+  authorId   String
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title      String      @db.VarChar(250)
+  slug       String      @unique @db.VarChar(250)
+  content    String      @db.Text
+  status     TopicStatus @default(OPEN) //(Enum: "open", "closed", "pinned", "archived")
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  view_count Int?        @default(0)
+  replies    Reply[]
 
   @@map("topics")
 }
@@ -306,8 +314,8 @@ model Reply {
   authorId         String
   author           User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   content          String   @db.Text
-  created_date     DateTime @default(now())
-  updated_date     DateTime @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   isAcceptedAnswer Boolean  @default(false) @db.Boolean
   votes            Vote[]
 
@@ -320,12 +328,14 @@ enum VoteType {
 }
 
 model Vote {
-  vote_id String   @id @unique @default(uuid())
-  reply   Reply    @relation(fields: [replyId], references: [reply_id])
-  replyId String
-  user    User     @relation(fields: [userId], references: [id])
-  userId  String
-  type    VoteType //(Enum: "upvote", "downvote")
+  vote_id   String   @id @unique @default(uuid())
+  reply     Reply    @relation(fields: [replyId], references: [reply_id])
+  replyId   String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  type      VoteType //(Enum: "upvote", "downvote")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([replyId, userId]) // Prevent duplicate votes
   @@map("votes")
@@ -387,24 +397,29 @@ enum JobType {
 }
 
 model Categorie {
-  cat_id              String        @id @unique @default(uuid())
-  name                String        @db.VarChar(250)
-  slug                String        @unique
+  cat_id              String           @id @unique @default(uuid())
+  name                String           @db.VarChar(250)
+  slug                String           @unique
   jobs                JobCategory[]
-  JobAlert            JobAlert?     @relation(fields: [jobAlertJobalert_id], references: [jobalert_id])
+  JobAlert            JobAlert?        @relation(fields: [jobAlertJobalert_id], references: [jobalert_id])
   jobAlertJobalert_id String?
-  isDeleted           Boolean       @default(false) @db.Boolean
-  users UserPreference[] // Many-to-many with UserPreference
-  
+  isDeleted           Boolean          @default(false) @db.Boolean
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  users               UserPreference[] // Many-to-many with UserPreference
+
   @@map("job_categories")
 }
 
 model Skill {
-  skill_id  String     @id @unique @default(uuid())
-  name      String     @db.VarChar(250)
-  slug      String     @unique
-  isDeleted Boolean    @default(false) @db.Boolean
-  jobs      JobSkill[]
+  skill_id    String     @id @unique @default(uuid())
+  name        String     @db.VarChar(250)
+  slug        String     @unique
+  description String?    @db.Text
+  isDeleted   Boolean    @default(false) @db.Boolean
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  jobs        JobSkill[]
 
   @@map("skills")
 }
@@ -435,6 +450,7 @@ model Application {
   coverLetter      String?            @db.Text
   status           AppStatus          @default(PENDING)
   createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
   jobId            String
   job              Job                @relation(fields: [jobId], references: [job_id])
   userId           String // Applicant
@@ -465,11 +481,13 @@ model ApplicationDoc {
 }
 
 model Bookmark {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-  jobId  String
-  job    Job    @relation(fields: [jobId], references: [job_id])
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [job_id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, jobId])
 }
@@ -506,6 +524,7 @@ model CompanyReview {
   employerId String
   employer   User     @relation(fields: [employerId], references: [id], name: "employeur")
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   isApproved Boolean  @default(false) // Moderation
 
   @@map("company_reviews")
@@ -547,7 +566,9 @@ model ChatRoom {
   room_id      String            @id @default(uuid())
   name         String? // Group name (nullable for 1:1 chats)
   isGroup      Boolean           @default(false)
+  description  String?           @db.Text
   createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
   participants ChatParticipant[]
   messages     ChatMessage[]
   ChatInvite   ChatInvite[]
@@ -566,6 +587,8 @@ model ChatParticipant {
   isAdmin        Boolean  @default(false) // New field
   role           ChatRole @default(MEMBER) // Replaces `isAdmin`
   joinedAt       DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([userId, roomId]) // Prevent duplicates
   @@map("chat_participants")
@@ -581,6 +604,7 @@ model ChatMessage {
   sender     User     @relation(fields: [senderId], references: [id])
   isDeleted  Boolean  @default(false) // New field
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("messages")
 }
@@ -649,6 +673,8 @@ model Episode {
   podcast     Podcast          @relation(fields: [podcastId], references: [podcast_id])
   podcastId   String
   isDeleted   Boolean          @default(false) // New field
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   listens     Listen[]
   transcript  Transcript?
   comments    PodcastComment[]
@@ -674,6 +700,7 @@ model Transcript {
   episodeId     String   @unique
   isDeleted     Boolean  @default(false) // New field
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("transcripts")
 }
@@ -686,6 +713,7 @@ model PodcastSubscription {
   podcast   Podcast  @relation(fields: [podcastId], references: [podcast_id])
   podcastId String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, podcastId]) // Prevent duplicate subscriptions
 }
@@ -702,6 +730,7 @@ model PodcastComment {
   parent    PodcastComment?  @relation("CommentHierarchy", fields: [parentId], references: [podcom_id])
   replies   PodcastComment[] @relation("CommentHierarchy")
   createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   @@map("podcast_comments")
 }
@@ -725,12 +754,15 @@ model Book {
 }
 
 model BookCategory {
-  bookcat_id                  String          @id @default(uuid())
-  name                        String
-  slug                        String          @unique
-  isDeleted                   Boolean         @default(false) // New field
-  books                       Book[]
-  users UserPreference[] // Many-to-many with UserPreference
+  bookcat_id  String           @id @default(uuid())
+  name        String
+  slug        String           @unique
+  isDeleted   Boolean          @default(false) // New field
+  description String?          @db.Text
+  books       Book[]
+  users       UserPreference[] // Many-to-many with UserPreference
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   @@map("book_categories")
 }
@@ -743,6 +775,7 @@ model UserBook {
   bookId      String
   progress    Int      @default(0) // Last read page
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([userId, bookId])
   @@map("user_books")
@@ -760,6 +793,7 @@ model Tutorial {
   duration         Int? // Minutes
   categories       TutorialCategory[]
   createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
   TutorialProgress TutorialProgress[]
   isDeleted        Boolean            @default(false) // New field
 
@@ -775,6 +809,8 @@ model TutorialSection {
   tutorial      Tutorial @relation(fields: [tutorialId], references: [tutorial_id])
   tutorialId    String
   isDeleted     Boolean  @default(false) // New field
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("tutorial_sections")
 }
@@ -788,18 +824,23 @@ model TutorialProgress {
   sectionId      String? // Last completed section
   isDeleted      Boolean  @default(false) // New field
   isDone         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([userId, tutorialId])
   @@map("tutorial_progress")
 }
 
 model TutorialCategory {
-  tutcat_id                   String          @id @default(uuid())
-  name                        String
-  slug                        String          @unique
-  isDeleted                   Boolean         @default(false) // New field
-  tutorials                   Tutorial[]
-  users UserPreference[] // Many-to-many with UserPreference
+  tutcat_id   String           @id @default(uuid())
+  name        String
+  slug        String           @unique
+  isDeleted   Boolean          @default(false) // New field
+  description String?          @db.Text
+  tutorials   Tutorial[]
+  users       UserPreference[] // Many-to-many with UserPreference
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   @@map("tutorial_categories")
 }
@@ -812,9 +853,10 @@ model UserPreference {
   bookCategories   BookCategory[] // Preferred book genres
   tutorialTopics   TutorialCategory[] // Preferred tutorial topics
   blogCategories   Category[] // Preferred blog topics
-  jobCategories   Categorie[] // Preferred job topics
+  jobCategories    Categorie[] // Preferred job topics
   language         String             @default("en")
   notifyNewContent Boolean            @default(true)
-
-  User User[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  User             User[]
 }

@@ -157,11 +157,9 @@ export const signUpMemberAuthentication = async ({ body }) => {
                 email: body.email,
                 phone: body.phone,
                 pwd_hash: await bcrypt.hash(body.password, 12),
-                password_hash:await bcrypt.hash(body.password, 12),
                 codeuser: `USR-${await codeGenerator(10, 'ABCDEFGHIJKLMN1234567890')}`,
                 unom: body.unom,
                 uprenom: body.uprenom,
-                avatar: body.avatar,
                 isDeleted: false,
             }
         });
