@@ -30,6 +30,8 @@ import replyRoute from './forum/reply.routes.js';
 import chatRoute from './chat/chat.routes.js';
 import podcastRoute from './podcast/podcast.routes.js';
 
+import analyticRoute from './analytics/analytic.routes.js';
+
 export default (router) => {
   router.use('/auth', authRoute());
   router.use('/user', userRoute());
@@ -63,5 +65,8 @@ export default (router) => {
   //tutorials routes
   router.use('/tutorial', tutorialRoute());
   router.use('/tutorial-catgory', tutorialCategorieRoute());
+
+  //books routes
+  router.use('/analytic', analyticRoute());
   return router;
 };
