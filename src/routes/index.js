@@ -33,6 +33,15 @@ import podcastRoute from './podcast/podcast.routes.js';
 import analyticRoute from './analytics/analytic.routes.js';
 
 export default (router) => {
+  // routes/users.js
+
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Retrieve a list of JSONPlaceholder users
+ *     description: Retrieve a list of users from JSONPlaceholder. Can be used to populate a list of fake users when prototyping or testing an API.
+*/
   router.use('/auth', authRoute());
   router.use('/user', userRoute());
   router.use('/document', documentRoute());

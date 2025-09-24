@@ -13,7 +13,7 @@ import { ErrorHandler } from './middlewares/errorHandler.js';
 import { socketBlock } from './jobs/socketio.js';
 
 import swaggerUi from 'swagger-ui-express';
-//import { apiDocumentation } from './docs/apidocs.js';
+import swaggerJSDoc from 'swagger-jsdoc';
 import { createKeys } from './utils/vault.js';
 import { redisLimiter } from './middlewares/redisRateLimiter.js';
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
@@ -44,6 +44,26 @@ app.use(cors({
   origin: "http://localhost:8080",
   credentials: true,
 }));
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'YouthConnekt API',
+      version: '1.0.0',
+      description: 'A description of your API',
+    },
+    servers: [
+      {
+        url: 'http://localhost:4000', // Replace with your API base URL
+        description: 'Development server',
+      },
+    ],
+  },
+  apis: ['../src/routes/.js', './server.js'], // Paths to files containing API routes and JSDoc comments
+};
+
+
 app.use(express.json());
 app.use(urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -61,6 +81,10 @@ if (env.node_env === 'production') {
   // routes
   app.use('/api/v1/youth/stag', rootRouter);
 }
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(redisLimiter); // Use Redis-based limiter instead
 app.use('*', (req, res) => {
   res.status(404).send({ message: 'Resource URL not found', success: false, data: null });

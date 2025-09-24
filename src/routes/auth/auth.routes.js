@@ -8,7 +8,6 @@ const authRoutes = router.Router();
 
 const authRoute = () => {
 
-  //authentification
   authRoutes.post(
     '/signup',
     //validateData(registerSchema),
