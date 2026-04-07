@@ -1,18 +1,215 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "postgres"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ==================== ENUMS ====================
+
+enum StorageProvider {
+  LOCAL
+  S3
+  CLOUDINARY
+  GOOGLE_CLOUD
+  AZURE
+}
+
+enum AccountType {
+  INDIVIDUAL
+  COMPANY
+  UNIVERSITY
+  GOVERNMENT
+  NGO
+}
+
+enum AccountStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  BANNED
+  DEACTIVATED
+}
+
+enum ContentStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ARCHIVED
+  FLAGGED
+  DELETED
+}
+
+enum ModerationAction {
+  APPROVE
+  REJECT
+  FLAG
+  HIDE
+  DELETE
+  WARN_USER
+  SUSPEND_USER
+  BAN_USER
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_SPEECH
+  VIOLENCE
+  COPYRIGHT
+  MISINFORMATION
+  ADULT_CONTENT
+  OTHER
+}
+
+enum ContentType {
+  POST
+  TOPIC
+  REPLY
+  COMMENT
+  PODCAST_EPISODE
+  TUTORIAL
+  BOOK
+  JOB
+  CHAT_MESSAGE
+  EVENT
+}
+
+enum OrganizationRole {
+  MEMBER
+  MANAGER
+  ADMIN
+  OWNER
+}
+
+enum ModerationStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  DISMISSED
+  ESCALATED
+}
+
+enum EventType {
+  WEBINAR
+  WORKSHOP
+  CONFERENCE
+  MEETUP
+  TRAINING
+  QANDA
+  PANEL_DISCUSSION
+}
+
+enum HostType {
+  USER
+  ORGANIZATION
+}
+
+enum EventStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  CANCELLED
+  ATTENDED
+  NO_SHOW
+}
+
+enum SponsoredStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationType {
+  CONTENT_LIKE
+  CONTENT_COMMENT
+  CONTENT_SHARE
+  MENTION
+  MESSAGE
+  EVENT_REMINDER
+  JOB_ALERT
+  ACHIEVEMENT_EARNED
+  REPORT_RESOLVED
+  SYSTEM_ALERT
+  MODERATION_WARNING
+  SUBSCRIPTION_UPDATE
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum TopicStatus {
+  OPEN
+  CLOSED
+  PINNED
+  ARCHIVED
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum AppStatus {
+  PENDING
+  REVIEWED
+  REJECTED
+  INTERVIEW
+  HIRED
+}
+
+enum AlertFrequency {
+  INSTANT
+  DAILY
+  WEEKLY
+}
+
+enum AppEventType {
+  STATUS_CHANGE
+  INTERVIEW
+  NOTE
+  EMAIL_SENT
+}
+
+enum ChatRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum SourceType {
+  POST
+  TOPIC
+  REPLY
+  COMMENT
+}
+
+// ==================== EXISTING MODELS (Preserved) ====================
 
 model MethodePaiement {
   idmethode                 String   @id @unique @default(uuid())
@@ -53,152 +250,739 @@ model Parametre {
   updatedAt                  DateTime @updatedAt
 }
 
-model PasswordReset {
-  idreset   String   @id @unique @default(uuid())
-  email     String   @db.VarChar(255)
-  token     String   @db.VarChar(255)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ==================== ORGANIZATION & ACCOUNT MANAGEMENT ====================
+
+model Organization {
+  id                String         @id @default(cuid())
+  name              String
+  slug              String         @unique
+  email             String         @unique
+  phone             String?
+  type              AccountType    @default(COMPANY)
+  status            AccountStatus  @default(PENDING_VERIFICATION)
+  logo              String?
+  coverImage        String?
+  description       String?        @db.Text
+  website           String?
+  address           String?
+  city              String?
+  country           String?
+  taxId             String?
+  verifiedAt        DateTime?
+  verifiedBy        String?
+  metadata          Json?
+  isDeleted         Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  users             OrganizationUser[]
+  departments       Department[]
+  postedJobs        Job[]
+  companyReviews    CompanyReview[]   @relation("employerOrganization")
+  hostedEvents      Event[]           @relation("hostOrganization")
+  sponsoredContent  SponsoredContent[]
+  
+  @@map("organizations")
 }
 
-enum Role {
-  ADMIN
-  MODERATOR
-  USER
-  EMPLOYER // New role for job posters
+model Department {
+  id              String         @id @default(cuid())
+  name            String
+  description     String?        @db.Text
+  organizationId  String
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parentDeptId    String?
+  parentDept      Department?     @relation("DeptHierarchy", fields: [parentDeptId], references: [id])
+  subDepartments  Department[]    @relation("DeptHierarchy")
+  headUserId      String?
+  headUser        User?           @relation("DepartmentHead", fields: [headUserId], references: [id])
+  isDeleted       Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  users           OrganizationUser[]
+  
+  @@map("departments")
 }
+
+model OrganizationUser {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId  String
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  departmentId    String?
+  department      Department?    @relation(fields: [departmentId], references: [id])
+  role            OrganizationRole
+  title           String?
+  isPrimaryContact Boolean        @default(false)
+  joinedAt        DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  @@unique([userId, organizationId])
+  @@map("organization_users")
+}
+
+// ==================== ENHANCED USER MODEL ====================
 
 model User {
-  id                  String         @id @unique @default(uuid())
-  email               String         @unique @db.VarChar(255)
-  phone               String         @unique @db.VarChar(255)
+  id                  String                @id @default(cuid())
+  email               String?               @unique @db.VarChar(255)
+  phone               String                @unique @db.VarChar(255)
   pwd_hash            String
-  codeuser            String         @db.VarChar(250)
-  unom                String?        @db.VarChar(250)
-  uprenom             String?        @db.VarChar(250)
-  display_name        String?        @db.VarChar(250)
-  registration_date   DateTime?      @db.Date
-  last_login          DateTime?      @db.Date
-  is_banned           Boolean        @default(false) @db.Boolean
-  profile_picture_url String?        @db.VarChar(250)
-  bio                 String?        @db.Text
-  email_verified_at   DateTime?      @db.Date
-  usession            String?        @db.VarChar(250)
-  role                Role           @default(USER) //(Enum: "draft", "published", "archived")
-  refreshTokens       RefreshToken[]
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  isDeleted           Boolean?       @default(false) @db.Boolean
+  codeuser            String                @db.VarChar(250)
+  unom                String?               @db.VarChar(250)
+  uprenom             String?               @db.VarChar(250)
+  display_name        String?               @db.VarChar(250)
+  username            String?               @unique
+  registration_date   DateTime?             @db.Date
+  last_login          DateTime?             @db.Date
+  is_banned           Boolean               @default(false)
+  profile_picture_url String?               @db.VarChar(500)
+  cover_photo_url     String?               @db.VarChar(500)
+  bio                 String?               @db.Text
+  dateOfBirth         DateTime?
+  gender              String?
+  location            String?
+  timezone            String?               @default("UTC")
+  email_verified_at   DateTime?             @db.Date
+  phone_verified_at   DateTime?
+  two_factor_enabled  Boolean               @default(false)
+  two_factor_secret   String?
+  usession            String?               @db.VarChar(250)
+  accountType         AccountType           @default(INDIVIDUAL)
+  status              AccountStatus         @default(ACTIVE)
+  lastActiveAt        DateTime?
+  mobileSettings      Json?                 @default("{}")
+  appVersion          String?
+  platform            String?
+  lastMobileLogin     DateTime?
+  metadata            Json?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  isDeleted           Boolean?              @default(false)
+  // Message reactions
+  messageReactions     MessageReaction[]
+  
+  // Moderated reports
+  moderatedReports     ContentReport[]        @relation("moderatedReports")
 
-  Document Document[]
+  organizations         OrganizationUser[]
+  documents             Document[]
+  userRoles             UserRole[]
+  refreshTokens         RefreshToken[]
+  auditLogs             AuditLog[]
+  posts                 Post[]
+  comments              Comment[]
+  topics                Topic[]
+  replies               Reply[]
+  votes                 Vote[]
+  notifications         Notification[]
+  jobs                  Job[]
+  bookmarks             Bookmark[]
+  jobAlerts             JobAlert[]
+  reviews               CompanyReview[]       @relation(name: "utilisateur")
+  applications          Application[]
+  viewedJobs            JobView[]
+  companyReview         CompanyReview[]       @relation(name: "employeur")
+  chatParticipants      ChatParticipant[]
+  chatMessages          ChatMessage[]
+  chatInvites           ChatInvite[]
+  chatAuditLogs         ChatAuditLog[]
+  podcasts              Podcast[]
+  listens               Listen[]
+  podcastSubscriptions  PodcastSubscription[]
+  podcastComments       PodcastComment[]
+  books                 UserBook[]
+  tutorials             Tutorial[]
+  tutorialProgress      TutorialProgress[]
+  preferences           UserPreference?       @relation(fields: [preferenceId], references: [preference_id])
+  preferenceId          String?               @unique
+  emailVerifications    EmailVerification[]
+  phoneVerifications    PhoneVerification[]
+  passwordResets        PasswordReset[]
+  resourcePermissions   ResourcePermission[]
+  
+  // Mobile and device relations
+  deviceTokens          DeviceToken[]
+  sessionTokens         SessionToken[]
+  pushNotifications     PushNotification[]
+  mobileAnalytics       MobileAnalytics[]
+  offlineSyncQueue      OfflineSyncQueue[]
+  apiRateLimits         ApiRateLimit[]
+  mobileContentPrefs    MobileContentPreference[]
+  
+  // Moderation relations
+  contentReports        ContentReport[]        @relation("reporter")
+  receivedReports       ContentReport[]        @relation("reportedUser")
+  moderationActions     ModerationLog[]        @relation("moderatorActions")
+  adminAuditLogs        AdminAuditLog[]        @relation("adminActions")
+  
+  // Gamification
+  userAchievements      UserAchievement[]
+  userPoints            UserPoints?
+  
+  // Events
+  eventRegistrations    EventRegistration[]
+  eventFeedback         EventFeedback[]
+  hostedEvents          Event[]                @relation("hostUser")
+  
+  // Content interactions
+  savedDrafts           SavedDraft[]
+  contentLikes          ContentLike[]
+  contentFlags          ContentFlag[]
+  contentViews          ContentView[]
+  contentShares         ContentShare[]
+  sponsoredContent      SponsoredContent[]
+  userActivityLogs      UserActivityLog[]
+  
+  // Messages
+  directMessages        DirectMessage[]        @relation("sender")
+  receivedMessages      DirectMessage[]        @relation("receiver")
+  
+  // Department head
+  headedDepartments     Department[]           @relation("DepartmentHead")
 
-  posts         Post[]
-  comments      Comment[]
-  topics        Topic[]
-  replies       Reply[]
-  votes         Vote[]
-  notifications Notification[]
-  Job           Job[]
-  Bookmark      Bookmark[]
-
-  jobAlerts            JobAlert[]
-  reviews              CompanyReview[]       @relation(name: "utilisateur")
-  applications         Application[]
-  viewedJobs           JobView[]
-  companyReview        CompanyReview[]       @relation(name: "employeur")
-  chatParticipants     ChatParticipant[]
-  chatMessages         ChatMessage[]
-  chatInvites          ChatInvite[]
-  chatAuditLogs        ChatAuditLog[]
-  podcasts             Podcast[]
-  listens              Listen[]
-  podcastSubscriptions PodcastSubscription[]
-  podcastComments      PodcastComment[]
-  books                UserBook[]
-  tutorials            Tutorial[]
-  tutorialProgress     TutorialProgress[]
-  preferences          UserPreference?       @relation(fields: [preferenceId], references: [preference_id])
-  preferenceId         String?               @unique
-
+  @@index([email])
+  @@index([phone])
+  @@index([username])
+  @@index([status])
+  @@index([lastActiveAt])
+  @@index([createdAt])
   @@map("users")
 }
 
-model Tdocument {
-  idtdoc          String   @id @unique @default(uuid())
-  nomtdoc         String   @db.VarChar(255)
-  descriptiontdoc String?
-  published       Boolean? @default(true) @db.Boolean
-  isDeleted       Boolean? @default(false) @db.Boolean
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+// Device Tokens for Push Notifications
+model DeviceToken {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token             String    @unique
+  platform          String
+  deviceId          String    @unique
+  deviceName        String?
+  deviceModel       String?
+  osVersion         String?
+  appVersion        String?
+  isActive          Boolean   @default(true)
+  lastUsedAt        DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  Document Document[]
+  sessionTokens     SessionToken[]
 
-  @@map("tdocuments")
+  @@index([userId])
+  @@index([token])
+  @@map("device_tokens")
 }
 
+// Mobile Session Management
+model SessionToken {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token             String    @unique
+  deviceTokenId     String?
+  deviceToken       DeviceToken? @relation(fields: [deviceTokenId], references: [id])
+  refreshToken      String    @unique
+  expiresAt         DateTime
+  lastActiveAt      DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("session_tokens")
+}
+
+// Mobile App Configurations
+model MobileConfig {
+  id                String    @id @default(cuid())
+  key               String    @unique
+  value             Json
+  description       String?
+  platform          String?
+  minAppVersion     String?
+  isActive          Boolean   @default(true)
+  updatedBy         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("mobile_configs")
+}
+
+// Push Notifications Queue
+model PushNotification {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title             String
+  body              String
+  data              Json?
+  imageUrl          String?
+  priority          String    @default("normal")
+  status            String    @default("pending")
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  error             String?
+  createdAt         DateTime  @default(now())
+  retryCount        Int       @default(0)
+  nextRetryAt       DateTime?
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("push_notifications")
+}
+
+// Mobile Analytics
+model MobileAnalytics {
+  id                String    @id @default(cuid())
+  userId            String?
+  user              User?     @relation(fields: [userId], references: [id])
+  sessionId         String
+  eventType         String
+  screenName        String?
+  duration          Int?
+  metadata          Json?
+  deviceInfo        Json?
+  ipAddress         String?
+  createdAt         DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([sessionId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("mobile_analytics")
+}
+
+// Offline Sync Queue
+model OfflineSyncQueue {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  operation         String
+  entityType        String
+  entityId          String?
+  data              Json
+  status            String    @default("pending")
+  error             String?
+  retryCount        Int       @default(0)
+  createdAt         DateTime  @default(now())
+  syncedAt          DateTime?
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("offline_sync_queue")
+}
+
+// API Rate Limiting
+model ApiRateLimit {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint          String
+  requests          Int       @default(1)
+  windowStart       DateTime  @default(now())
+  
+  @@unique([userId, endpoint, windowStart])
+  @@index([userId, windowStart])
+  @@map("api_rate_limits")
+}
+
+// Feature Flags
+model FeatureFlag {
+  id                String    @id @default(cuid())
+  name              String    @unique
+  description       String?
+  isEnabled         Boolean   @default(false)
+  rolloutPercentage Int       @default(100)
+  platforms         String[]
+  minAppVersion     String?
+  metadata          Json?
+  createdBy         String?
+  updatedBy         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("feature_flags")
+}
+
+// Cached Content for Mobile
+model MobileCache {
+  id                String    @id @default(cuid())
+  cacheKey          String    @unique
+  data              Json
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
+  
+  @@index([expiresAt])
+  @@map("mobile_cache")
+}
+
+// User Content Preferences
+model MobileContentPreference {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentType       ContentType
+  feedOrder         String    @default("recent")
+  notificationsEnabled Boolean @default(true)
+  quietHoursStart   String?
+  quietHoursEnd     String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([userId, contentType])
+  @@map("mobile_content_preferences")
+}
+
+// ==================== ADMIN WEB-SPECIFIC MODELS ====================
+
+// Admin Audit Trail
+model AdminAuditLog {
+  id                String    @id @default(cuid())
+  adminId           String
+  admin             User      @relation("adminActions", fields: [adminId], references: [id], onDelete: Cascade)
+  action            String
+  targetType        String
+  targetId          String
+  oldValues         Json?
+  newValues         Json?
+  ipAddress         String
+  userAgent         String
+  createdAt         DateTime  @default(now())
+  
+  @@index([adminId])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+  @@map("admin_audit_logs")
+}
+
+// Admin Dashboard Widgets Configuration
+model AdminWidget {
+  id                String    @id @default(cuid())
+  name              String    @unique
+  type              String
+  config            Json
+  permissions       String[]
+  displayOrder      Int
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@map("admin_widgets")
+}
+
+// System Health Checks
+model SystemHealth {
+  id                String    @id @default(cuid())
+  service           String
+  status            String
+  responseTime      Int?
+  errorRate         Float?
+  metadata          Json?
+  checkedAt         DateTime  @default(now())
+  
+  @@index([service, checkedAt])
+  @@map("system_health")
+}
+
+// Scheduled Tasks
+model ScheduledTask {
+  id                String    @id @default(cuid())
+  name              String    @unique
+  cronExpression    String
+  handler           String
+  status            String    @default("active")
+  lastRunAt         DateTime?
+  nextRunAt         DateTime?
+  lastRunStatus     String?
+  lastRunError      String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([status, nextRunAt])
+  @@map("scheduled_tasks")
+}
+
+// API Endpoints Documentation
+model ApiEndpoint {
+  id                String    @id @default(cuid())
+  path              String    @unique
+  method            String
+  description       String
+  version           String    @default("1.0")
+  rateLimit         Int       @default(60)
+  requiredRoles     String[]
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@map("api_endpoints")
+}
+
+// Data Sync Configuration
+model SyncConfig {
+  id                String    @id @default(cuid())
+  entityType        String    @unique
+  syncInterval      Int       @default(300)
+  batchSize         Int       @default(50)
+  retentionDays     Int       @default(30)
+  isEnabled         Boolean   @default(true)
+  updatedAt         DateTime  @updatedAt
+  
+  @@map("sync_configs")
+}
+
+// ==================== ENHANCED DOCUMENT SYSTEM ====================
+
 model Document {
-  iddocument  String   @id @unique @default(uuid())
-  nomDocument String?  @db.VarChar(255)
-  description String?
-  fileUrl     String   @db.VarChar(255) // PDF stored in S3/Cloud Storage
-  published   Boolean? @default(true) @db.Boolean
-  isDeleted   Boolean? @default(false) @db.Boolean
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  tdocId      String
+  iddocument        String          @id @default(cuid())
+  description       String?         @db.Text
+  fileUrl           String          @db.VarChar(500)
+  name              String
+  originalName      String
+  fileName          String          @unique
+  fileType          String?
+  mimeType          String?
+  fileExtension     String
+  fileSize          Int
+  storagePath       String
+  storageProvider   StorageProvider @default(LOCAL)
+  duration          Int?
+  thumbnailUrl      String?         @db.VarChar(500)
+  isPublic          Boolean         @default(false)
+  accessCount       Int             @default(0)
+  published         Boolean?        @default(true)
+  isDeleted         Boolean?        @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  userId            String?
+  User              User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  Tdocument Tdocument @relation(fields: [tdocId], references: [idtdoc], onDelete: Cascade, onUpdate: NoAction)
-  userId    String?
-  User      User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  applications ApplicationDoc[]
-
+  applications      ApplicationDoc[]
+  chatDocuments     ChatDocument[]
+  eventAttachments  EventAttachment[]
+  contentMedia      ContentMedia[]
+  
+  @@index([userId])
+  @@index([fileType])
   @@map("documents")
 }
 
-model RefreshToken {
-  id          String   @id @unique @default(uuid())
-  hashedToken String
-  userId      String
-  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  revoked     Boolean  @default(false) @db.Boolean
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isDeleted   Boolean  @default(false) @db.Boolean
+model ContentMedia {
+  id              String      @id @default(cuid())
+  contentId       String
+  contentType     ContentType
+  documentId      String
+  document        Document    @relation(fields: [documentId], references: [iddocument], onDelete: Cascade)
+  displayOrder    Int         @default(0)
+  isFeatured      Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  
+  @@unique([contentId, contentType, documentId])
+  @@index([contentId, contentType])
+  @@map("content_media")
 }
 
-//blog management models */
+// ==================== AUTH & SECURITY ====================
+
+model RefreshToken {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  clientType  String?
+  userAgent   String?
+  ipAddress   String?
+  tokenHash   String?
+  jti         String?
+  version     Int       @default(1)
+  rotatedFrom String?
+  expiresAt   DateTime
+  revoked     Boolean   @default(false)
+  isValid     Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+  lastUsed    DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  resource    String?
+  resourceId  String?
+  description String?
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?
+  userId      String?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  email     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verifications")
+}
+
+model PhoneVerification {
+  id          String   @id @default(cuid())
+  token       String
+  userId      String
+  phoneNumber String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([phoneNumber, token])
+  @@map("phone_verifications")
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
+}
+
+// ==================== RBAC SYSTEM ====================
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userRoles           UserRole[]
+  rolePermissions     RolePermission[]
+  resourcePermissions ResourcePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  module      String
+  action      String
+  resource    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissionss    RolePermission[]
+  resourcePermissions ResourcePermission[]
+
+  @@map("permissions")
+}
+
+model Resource {
+  id          String   @id @default(cuid())
+  module      String
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  resourcePermissions ResourcePermission[]
+
+  @@map("resources")
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model ResourcePermission {
+  id           String  @id @default(cuid())
+  resourceId   String
+  permissionId String
+  roleId       String?
+  userId       String?
+  conditions   Json?
+
+  resource   Resource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role       Role?      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("resource_permissions")
+}
+
+// ==================== BLOG MANAGEMENT ====================
 
 model Post {
   post_id            String         @id @unique @default(uuid())
   authorId           String
   author             User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   title              String         @db.VarChar(250)
-  slug               String         @unique @db.VarChar(250) //(Unique, SEO-friendly URL)
+  slug               String         @unique @db.VarChar(250)
   content            String         @db.Text
-  excerpt            String?        @db.VarChar(250) //(Short summary)
-  status             PostStatus     @default(DRAFT) //(Enum: "draft", "published", "archived")
+  excerpt            String?        @db.VarChar(250)
+  status             PostStatus     @default(DRAFT)
   published_date     DateTime?      @db.Date
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
-  featured_image_url String?        @db.VarChar(250) //
+  featured_image_url String?        @db.VarChar(250)
   view_count         Int?           @default(0)
   Comment            Comment[]
   categories         PostCategory[]
   tags               PostTag[]
 
+  @@index([status, published_date])
+  @@index([authorId, status])
+  @@index([createdAt])
   @@map("posts")
 }
 
-enum PostStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
-}
-
 model Category {
-  category_id String           @id @unique @default(uuid()) //(PK, Auto-increment)
+  category_id String           @id @unique @default(uuid())
   name        String           @db.VarChar(250)
   slug        String           @unique @db.VarChar(250)
   description String?          @db.Text
@@ -206,13 +990,13 @@ model Category {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   posts       PostCategory[]
-  users       UserPreference[] // Many-to-many with UserPreference
+  users       UserPreference[]
 
   @@map("categories")
 }
 
 model Tag {
-  tag_id      String    @id @unique @default(uuid()) //(PK, Auto-increment)
+  tag_id      String    @id @unique @default(uuid())
   name        String    @db.VarChar(250)
   slug        String    @unique @db.VarChar(250)
   description String?   @db.Text
@@ -224,7 +1008,6 @@ model Tag {
   @@map("tags")
 }
 
-// Junction tables (Many-to-Many)
 model PostCategory {
   post       Post     @relation(fields: [postId], references: [post_id])
   postId     String
@@ -245,28 +1028,40 @@ model PostTag {
   @@map("post_tags")
 }
 
+// ==================== ENHANCED COMMENT SYSTEM ====================
+
 model Comment {
-  comment_id String   @id @unique @default(uuid()) //(PK, Auto-increment)
-  post       Post     @relation(fields: [postId], references: [post_id])
-  postId     String
-  authorId   String
-  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  content    String   @db.Text
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  isApproved Boolean  @default(true)
-
-  parentComment   Comment?  @relation("CommentHierarchy", fields: [parentCommentId], references: [comment_id])
-  parentCommentId String?
-  childComments   Comment[] @relation("CommentHierarchy")
-
+  comment_id         String           @id @default(cuid())
+  content            String           @db.Text
+  authorId           String
+  author             User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentComment      Comment?         @relation("CommentHierarchy", fields: [parentCommentId], references: [comment_id])
+  parentCommentId    String?
+  childComments      Comment[]        @relation("CommentHierarchy")
+  targetId           String
+  targetType         ContentType
+  isEdited           Boolean          @default(false)
+  editedAt           DateTime?
+  isDeleted          Boolean          @default(false)
+  isApproved         Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  
+  postId             String?
+  post               Post?            @relation(fields: [postId], references: [post_id])
+  topicId            String?
+  topic              Topic?           @relation(fields: [topicId], references: [topic_id])
+  
+  @@index([targetId, targetType])
+  @@index([authorId])
+  @@index([createdAt])
   @@map("comments")
 }
 
-// Forum management */
+// ==================== FORUM MANAGEMENT ====================
 
 model Forum {
-  forum_id      String   @id @unique @default(uuid()) //
+  forum_id      String   @id @unique @default(uuid())
   name          String   @db.VarChar(250)
   slug          String   @unique @db.VarChar(250)
   description   String   @db.Text
@@ -283,7 +1078,7 @@ model Forum {
 }
 
 model Topic {
-  topic_id   String      @id @unique @default(uuid()) // (PK, Auto-increment)
+  topic_id   String      @id @unique @default(uuid())
   forum      Forum       @relation(fields: [forumId], references: [forum_id])
   forumId    String
   authorId   String
@@ -291,24 +1086,18 @@ model Topic {
   title      String      @db.VarChar(250)
   slug       String      @unique @db.VarChar(250)
   content    String      @db.Text
-  status     TopicStatus @default(OPEN) //(Enum: "open", "closed", "pinned", "archived")
+  status     TopicStatus @default(OPEN)
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   view_count Int?        @default(0)
   replies    Reply[]
+  comments   Comment[]
 
   @@map("topics")
 }
 
-enum TopicStatus {
-  OPEN
-  CLOSED
-  PINNED
-  ARCHIVED
-}
-
 model Reply {
-  reply_id         String   @id @unique @default(uuid()) // (PK, Auto-increment)
+  reply_id         String   @id @unique @default(uuid())
   topic            Topic    @relation(fields: [topicId], references: [topic_id])
   topicId          String
   authorId         String
@@ -322,78 +1111,53 @@ model Reply {
   @@map("replies")
 }
 
-enum VoteType {
-  UPVOTE
-  DOWNVOTE
-}
-
 model Vote {
   vote_id   String   @id @unique @default(uuid())
   reply     Reply    @relation(fields: [replyId], references: [reply_id])
   replyId   String
   user      User     @relation(fields: [userId], references: [id])
   userId    String
-  type      VoteType //(Enum: "upvote", "downvote")
+  type      VoteType
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([replyId, userId]) // Prevent duplicate votes
+  @@unique([replyId, userId])
   @@map("votes")
 }
 
-//Notifications
+// ==================== JOBS MANAGEMENT ====================
 
-model Notification {
-  notification_id String     @id @unique @default(uuid())
-  user            User       @relation(fields: [userId], references: [id])
-  userId          String
-  message         String     @db.Text
-  isRead          Boolean    @default(false) @db.Boolean
-  created_date    DateTime   @default(now())
-  sourceType      SourceType
-  sourceId        Int
-
-  @@map("notifications")
-}
-
-enum SourceType {
-  POST
-  TOPIC
-  REPLY
-  COMMENT
-}
-
-//jobs model
 model Job {
-  job_id         String        @id @unique @default(uuid())
-  title          String        @db.Text
-  description    String        @db.Text
-  jobType        JobType       @default(FULL_TIME)
-  location       String?       @db.VarChar(250)
-  remote         Boolean       @default(false)
-  salaryMin      Int?
-  salaryMax      Int?
-  salaryCurrency String?       @default("USD")
-  expiryDate     DateTime? // Job post expiry
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  employerId     String // Who posted the job
-  employer       User          @relation(fields: [employerId], references: [id])
-  applications   Application[]
-  categories     JobCategory[]
-  skills         JobSkill[]
-  Bookmark       Bookmark[]
-  JobView        JobView[]
+  job_id           String        @id @default(uuid())
+  title            String        @db.Text
+  description      String        @db.Text
+  jobType          JobType       @default(FULL_TIME)
+  location         String?       @db.VarChar(250)
+  remote           Boolean       @default(false)
+  salaryMin        Int?
+  salaryMax        Int?
+  salaryCurrency   String?       @default("USD")
+  expiryDate       DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  employerId       String
+  employer         User          @relation(fields: [employerId], references: [id])
+  sponsoredById    String?
+  sponsoredBy      Organization? @relation(fields: [sponsoredById], references: [id])
+  isPromoted       Boolean       @default(false)
+  promotionEndsAt  DateTime?
+  views            Int           @default(0)
+  applicationsCount Int          @default(0)
+  applications     Application[]
+  categories       JobCategory[]
+  skills           JobSkill[]
+  bookmarks        Bookmark[]
+  jobviews         JobView[]
 
+  @@index([employerId, createdAt])
+  @@index([isPromoted, promotionEndsAt])
+  @@index([expiryDate])
   @@map("jobs")
-}
-
-enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  INTERNSHIP
-  FREELANCE
 }
 
 model Categorie {
@@ -406,7 +1170,7 @@ model Categorie {
   isDeleted           Boolean          @default(false) @db.Boolean
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
-  users               UserPreference[] // Many-to-many with UserPreference
+  users               UserPreference[]
 
   @@map("job_categories")
 }
@@ -424,14 +1188,13 @@ model Skill {
   @@map("skills")
 }
 
-// Junction tables
 model JobCategory {
   job         Job       @relation(fields: [jobId], references: [job_id])
   jobId       String
   categorie   Categorie @relation(fields: [categorieId], references: [cat_id])
   categorieId String
 
-  @@unique([jobId, categorieId]) // Prevent duplicate votes
+  @@unique([jobId, categorieId])
   @@map("job_categories_data")
 }
 
@@ -446,14 +1209,14 @@ model JobSkill {
 }
 
 model Application {
-  app_id           String             @id @unique @default(uuid())
+  app_id           String             @id @default(uuid())
   coverLetter      String?            @db.Text
   status           AppStatus          @default(PENDING)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   jobId            String
   job              Job                @relation(fields: [jobId], references: [job_id])
-  userId           String // Applicant
+  userId           String
   user             User               @relation(fields: [userId], references: [id])
   documents        ApplicationDoc[]
   ApplicationEvent ApplicationEvent[]
@@ -461,15 +1224,6 @@ model Application {
   @@map("applications")
 }
 
-enum AppStatus {
-  PENDING
-  REVIEWED
-  REJECTED
-  INTERVIEW
-  HIRED
-}
-
-// Junction tables
 model ApplicationDoc {
   application Application @relation(fields: [appId], references: [app_id])
   appId       String
@@ -492,13 +1246,12 @@ model Bookmark {
   @@unique([userId, jobId])
 }
 
-//job alert tracking
 model JobAlert {
   jobalert_id String         @id @default(uuid())
   userId      String
   user        User           @relation(fields: [userId], references: [id])
-  keywords    String[] // e.g., ["React", "Remote"]
-  categories  Categorie[] // Optional: Alerts by category
+  keywords    String[]
+  categories  Categorie[]
   frequency   AlertFrequency @default(DAILY)
   isActive    Boolean        @default(true)
   createdAt   DateTime       @default(now())
@@ -506,26 +1259,22 @@ model JobAlert {
   @@map("job_alerts")
 }
 
-enum AlertFrequency {
-  INSTANT // Notify immediately
-  DAILY
-  WEEKLY
-}
-
 model CompanyReview {
   review_id  String   @id @default(uuid())
-  rating     Int      @db.Integer // 1-5 stars
+  rating     Int      @db.Integer
   title      String   @db.VarChar(250)
   review     String   @db.VarChar(250)
-  pros       String[] // e.g., ["Great culture", "Flexible hours"]
-  cons       String[] // e.g., ["Low pay", "Slow growth"]
+  pros       String[]
+  cons       String[]
   userId     String
   user       User     @relation(fields: [userId], references: [id], name: "utilisateur")
   employerId String
   employer   User     @relation(fields: [employerId], references: [id], name: "employeur")
+  organizationId String?
+  organization Organization? @relation("employerOrganization", fields: [organizationId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  isApproved Boolean  @default(false) // Moderation
+  isApproved Boolean  @default(false)
 
   @@map("company_reviews")
 }
@@ -535,177 +1284,228 @@ model ApplicationEvent {
   applicationId String
   application   Application  @relation(fields: [applicationId], references: [app_id])
   type          AppEventType
-  message       String? // e.g., "Interview on Jan 30"
-  createdBy     String // User ID (employer/admin)
+  message       String?
+  createdBy     String
   createdAt     DateTime     @default(now())
 
   @@map("application_events")
-}
-
-enum AppEventType {
-  STATUS_CHANGE
-  INTERVIEW
-  NOTE // Internal comments
-  EMAIL_SENT
 }
 
 model JobView {
   job_view_id String   @id @default(uuid())
   jobId       String
   job         Job      @relation(fields: [jobId], references: [job_id])
-  userId      String? // Null if anonymous
+  userId      String?
   user        User?    @relation(fields: [userId], references: [id])
   viewedAt    DateTime @default(now())
-  ipAddress   String? // For analytics
+  ipAddress   String?
 
   @@map("job_views")
 }
 
-// Chat Rooms (1:1 or Group)
+// ==================== CHAT SYSTEM ====================
+
 model ChatRoom {
   room_id      String            @id @default(uuid())
-  name         String? // Group name (nullable for 1:1 chats)
+  name         String?
   isGroup      Boolean           @default(false)
   description  String?           @db.Text
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   participants ChatParticipant[]
   messages     ChatMessage[]
-  ChatInvite   ChatInvite[]
-  ChatAuditLog ChatAuditLog[]
+  chatInvites   ChatInvite[]
+  chatAuditLogs ChatAuditLog[]
 
   @@map("rooms")
 }
 
-// Track who's in which chat
 model ChatParticipant {
   participant_id String   @id @default(uuid())
   userId         String
   user           User     @relation(fields: [userId], references: [id])
   roomId         String
   room           ChatRoom @relation(fields: [roomId], references: [room_id])
-  isAdmin        Boolean  @default(false) // New field
-  role           ChatRole @default(MEMBER) // Replaces `isAdmin`
+  isAdmin        Boolean  @default(false)
+  role           ChatRole @default(MEMBER)
   joinedAt       DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@unique([userId, roomId]) // Prevent duplicates
+  @@unique([userId, roomId])
   @@map("chat_participants")
 }
 
-// Chat Messages
 model ChatMessage {
-  message_id String   @id @default(uuid())
-  content    String
-  roomId     String
-  room       ChatRoom @relation(fields: [roomId], references: [room_id])
-  senderId   String
-  sender     User     @relation(fields: [senderId], references: [id])
-  isDeleted  Boolean  @default(false) // New field
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
+  message_id      String        @id @default(cuid())
+  content         String        @db.Text
+  roomId          String
+  room            ChatRoom      @relation(fields: [roomId], references: [room_id], onDelete: Cascade)
+  senderId        String
+  sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyToId       String?
+  replyTo         ChatMessage?  @relation("MessageReplies", fields: [replyToId], references: [message_id])
+  isDeleted       Boolean       @default(false)
+  isEdited        Boolean       @default(false)
+  editedAt        DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  documents       ChatDocument[]
+  reactions       MessageReaction[]
+  replies         ChatMessage[] @relation("MessageReplies")
+  
+  @@index([roomId])
+  @@index([senderId])
+  @@index([createdAt])
   @@map("messages")
 }
 
-// 1. Invitation Links
+model ChatDocument {
+  id          String      @id @default(cuid())
+  messageId   String
+  message     ChatMessage @relation(fields: [messageId], references: [message_id], onDelete: Cascade)
+  documentId  String
+  document    Document    @relation(fields: [documentId], references: [iddocument], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  
+  @@unique([messageId, documentId])
+  @@map("chat_documents")
+}
+
+model MessageReaction {
+  id          String      @id @default(cuid())
+  messageId   String
+  message     ChatMessage @relation(fields: [messageId], references: [message_id], onDelete: Cascade)
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reaction    String
+  createdAt   DateTime    @default(now())
+  
+  @@unique([messageId, userId, reaction])
+  @@map("message_reactions")
+}
+
 model ChatInvite {
   invite_id String   @id @default(uuid())
   roomId    String
   room      ChatRoom @relation(fields: [roomId], references: [room_id])
-  creatorId String // User who created the invite
+  creatorId String
   creator   User     @relation(fields: [creatorId], references: [id])
-  token     String   @unique // Unique invite token (e.g., JWT or random string)
-  expiresAt DateTime // Optional expiry
-  maxUses   Int? // Optional use limit
+  token     String   @unique
+  expiresAt DateTime
+  maxUses   Int?
   usedCount Int      @default(0)
   createdAt DateTime @default(now())
 
   @@map("chat_invites")
 }
 
-// 2. Role-Based Permissions
-enum ChatRole {
-  ADMIN
-  MODERATOR
-  MEMBER
-}
-
 model ChatAuditLog {
   log_id    String   @id @default(uuid())
-  action    String // e.g., "USER_ADDED", "INVITE_USED", "ROLE_CHANGED"
+  action    String
   roomId    String
   room      ChatRoom @relation(fields: [roomId], references: [room_id])
-  actorId   String // User who performed the action
+  actorId   String
   actor     User     @relation(fields: [actorId], references: [id])
-  targetId  String? // Affected user (if applicable)
-  metadata  Json? // Additional context (e.g., { oldRole: "MEMBER", newRole: "MODERATOR" })
+  targetId  String?
+  metadata  Json?
   createdAt DateTime @default(now())
 
   @@map("chat_audits")
 }
 
-//podcast feature
+// ==================== DIRECT MESSAGING ====================
+
+model DirectMessage {
+  id              String      @id @default(cuid())
+  senderId        String
+  sender          User        @relation(fields: [senderId], references: [id], onDelete: Cascade, name: "sender")
+  receiverId      String
+  receiver        User        @relation(fields: [receiverId], references: [id], onDelete: Cascade, name: "receiver")
+  message         String      @db.Text
+  isRead          Boolean     @default(false)
+  readAt          DateTime?
+  replyToId       String?
+  replyTo         DirectMessage? @relation("DMReplies", fields: [replyToId], references: [id])
+  replies         DirectMessage[] @relation("DMReplies")
+  isDeleted       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([senderId, receiverId])
+  @@index([createdAt])
+  @@map("direct_messages")
+}
+
+// ==================== PODCAST SYSTEM ====================
+
 model Podcast {
-  podcast_id  String                @id @default(uuid())
-  title       String
-  description String
-  coverImage  String? // URL to cover art
-  author      User                  @relation(fields: [authorId], references: [id])
-  authorId    String
-  episodes    Episode[]
-  isDeleted   Boolean               @default(false) // New field
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  subscribers PodcastSubscription[]
+  podcast_id      String                @id @default(uuid())
+  title           String
+  description     String
+  coverImage      String?
+  author          User                  @relation(fields: [authorId], references: [id])
+  authorId        String
+  episodes        Episode[]
+  isDeleted       Boolean               @default(false)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  subscribers     PodcastSubscription[]
+  isExplicit      Boolean               @default(false)
+  language        String                @default("en")
+  totalEpisodes   Int                   @default(0)
+  totalListens    Int                   @default(0)
+  rating          Float?
+  categories      String[]
 
   @@map("podcasts")
 }
 
 model Episode {
-  episode_id  String           @id @default(uuid())
-  title       String
-  description String
-  audioUrl    String // URL to audio file (e.g., S3)
-  duration    Int // Duration in seconds
-  publishDate DateTime         @default(now())
-  podcast     Podcast          @relation(fields: [podcastId], references: [podcast_id])
-  podcastId   String
-  isDeleted   Boolean          @default(false) // New field
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  listens     Listen[]
-  transcript  Transcript?
-  comments    PodcastComment[]
+  episode_id      String           @id @default(uuid())
+  title           String
+  description     String
+  audioUrl        String
+  duration        Int
+  publishDate     DateTime         @default(now())
+  podcast         Podcast          @relation(fields: [podcastId], references: [podcast_id])
+  podcastId       String
+  isDeleted       Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  listens         Listen[]
+  transcript      Transcript?
+  comments        PodcastComment[]
 
   @@map("episodes")
 }
 
 model Listen {
-  listen_id  String   @id @default(uuid())
-  episode    Episode  @relation(fields: [episodeId], references: [episode_id])
-  episodeId  String
-  user       User?    @relation(fields: [userId], references: [id]) // Null for anonymous
-  userId     String?
-  listenedAt DateTime @default(now())
+  listen_id    String   @id @default(uuid())
+  episode      Episode  @relation(fields: [episodeId], references: [episode_id])
+  episodeId    String
+  user         User?    @relation(fields: [userId], references: [id])
+  userId       String?
+  listenedAt   DateTime @default(now())
+  progress     Int?     @default(0)
+  completed    Boolean  @default(false)
 }
 
-// Transcripts (for accessibility/search)
 model Transcript {
   transcript_id String   @id @default(uuid())
-  content       String // Full text of the episode
+  content       String
   language      String   @default("en")
   episode       Episode  @relation(fields: [episodeId], references: [episode_id])
   episodeId     String   @unique
-  isDeleted     Boolean  @default(false) // New field
+  isDeleted     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@map("transcripts")
 }
 
-// User subscriptions
 model PodcastSubscription {
   podsub_id String   @id @default(uuid())
   user      User     @relation(fields: [userId], references: [id])
@@ -715,10 +1515,9 @@ model PodcastSubscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, podcastId]) // Prevent duplicate subscriptions
+  @@unique([userId, podcastId])
 }
 
-// Comments on episodes
 model PodcastComment {
   podcom_id String           @id @default(uuid())
   content   String
@@ -726,14 +1525,16 @@ model PodcastComment {
   episodeId String
   user      User             @relation(fields: [userId], references: [id])
   userId    String
-  parentId  String? // For nested replies
-  parent    PodcastComment?  @relation("CommentHierarchy", fields: [parentId], references: [podcom_id])
-  replies   PodcastComment[] @relation("CommentHierarchy")
+  parentId  String?
+  parent    PodcastComment?  @relation("PodcastCommentHierarchy", fields: [parentId], references: [podcom_id])
+  replies   PodcastComment[] @relation("PodcastCommentHierarchy")
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
   @@map("podcast_comments")
 }
+
+// ==================== BOOKS SYSTEM ====================
 
 model Book {
   book_id     String         @id @default(uuid())
@@ -741,11 +1542,11 @@ model Book {
   description String
   coverImage  String?
   author      String
-  price       Float? // Free if null
-  fileUrl     String? // PDF/EPUB stored in S3
-  pages       Json? // For online reading (e.g., {1: "content...", 2: "..."})
+  price       Float?
+  fileUrl     String?
+  pages       Json?
   categories  BookCategory[]
-  isDeleted   Boolean        @default(false) // New field
+  isDeleted   Boolean        @default(false)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   UserBook    UserBook[]
@@ -757,10 +1558,10 @@ model BookCategory {
   bookcat_id  String           @id @default(uuid())
   name        String
   slug        String           @unique
-  isDeleted   Boolean          @default(false) // New field
+  isDeleted   Boolean          @default(false)
   description String?          @db.Text
   books       Book[]
-  users       UserPreference[] // Many-to-many with UserPreference
+  users       UserPreference[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
@@ -773,13 +1574,15 @@ model UserBook {
   userId      String
   book        Book     @relation(fields: [bookId], references: [book_id])
   bookId      String
-  progress    Int      @default(0) // Last read page
+  progress    Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@unique([userId, bookId])
   @@map("user_books")
 }
+
+// ==================== TUTORIALS SYSTEM ====================
 
 model Tutorial {
   tutorial_id      String             @id @default(uuid())
@@ -789,13 +1592,21 @@ model Tutorial {
   author           User               @relation(fields: [authorId], references: [id])
   authorId         String
   sections         TutorialSection[]
-  difficulty       String             @default("beginner") // beginner/intermediate/advanced
-  duration         Int? // Minutes
+  difficulty       String             @default("beginner")
+  duration         Int?
   categories       TutorialCategory[]
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   TutorialProgress TutorialProgress[]
-  isDeleted        Boolean            @default(false) // New field
+  isDeleted        Boolean            @default(false)
+  rating           Float?
+  totalEnrollments Int                @default(0)
+  totalCompletions Int                @default(0)
+  prerequisites    String[]
+  learningOutcomes String[]
+  certificateEnabled Boolean          @default(false)
+  price            Float?             @default(0)
+  isPaid           Boolean            @default(false)
 
   @@map("tutorials")
 }
@@ -803,12 +1614,12 @@ model Tutorial {
 model TutorialSection {
   tutsection_id String   @id @default(uuid())
   title         String
-  content       String // Markdown/HTML
-  videoUrl      String? // Optional embedded video
-  order         Int // Display order
+  content       String
+  videoUrl      String?
+  order         Int
   tutorial      Tutorial @relation(fields: [tutorialId], references: [tutorial_id])
   tutorialId    String
-  isDeleted     Boolean  @default(false) // New field
+  isDeleted     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -821,9 +1632,10 @@ model TutorialProgress {
   userId         String
   tutorial       Tutorial @relation(fields: [tutorialId], references: [tutorial_id])
   tutorialId     String
-  sectionId      String? // Last completed section
-  isDeleted      Boolean  @default(false) // New field
+  sectionId      String?
+  isDeleted      Boolean  @default(false)
   isDone         Boolean  @default(false)
+  completedAt    DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -835,28 +1647,374 @@ model TutorialCategory {
   tutcat_id   String           @id @default(uuid())
   name        String
   slug        String           @unique
-  isDeleted   Boolean          @default(false) // New field
+  isDeleted   Boolean          @default(false)
   description String?          @db.Text
   tutorials   Tutorial[]
-  users       UserPreference[] // Many-to-many with UserPreference
+  users       UserPreference[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
   @@map("tutorial_categories")
 }
 
-//users preferences
+// ==================== USER PREFERENCES ====================
 
 model UserPreference {
   preference_id    String             @id @default(uuid())
   userId           String             @unique
-  bookCategories   BookCategory[] // Preferred book genres
-  tutorialTopics   TutorialCategory[] // Preferred tutorial topics
-  blogCategories   Category[] // Preferred blog topics
-  jobCategories    Categorie[] // Preferred job topics
+  bookCategories   BookCategory[]
+  tutorialTopics   TutorialCategory[]
+  blogCategories   Category[]
+  jobCategories    Categorie[]
   language         String             @default("en")
   notifyNewContent Boolean            @default(true)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   User             User[]
+}
+
+// ==================== MODERATION SYSTEM ====================
+
+model ContentReport {
+  id              String         @id @default(cuid())
+  contentId       String
+  contentType     ContentType
+  reporterId      String
+  reporter        User           @relation(fields: [reporterId], references: [id], onDelete: Cascade, name: "reporter")
+  reportedUserId  String?
+  reportedUser    User?          @relation(fields: [reportedUserId], references: [id], onDelete: SetNull, name: "reportedUser")
+  reason          ReportReason
+  description     String?        @db.Text
+  status          ModerationStatus @default(PENDING)
+  moderatedBy     String?
+  moderator       User?          @relation("moderatedReports", fields: [moderatedBy], references: [id])
+  moderationNote  String?        @db.Text
+  actionTaken     ModerationAction?
+  resolvedAt      DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  @@index([contentId, contentType])
+  @@index([status])
+  @@map("content_reports")
+}
+
+model ModerationLog {
+  id              String           @id @default(cuid())
+  moderatorId     String
+  moderator       User             @relation("moderatorActions", fields: [moderatorId], references: [id], onDelete: Cascade)
+  action          ModerationAction
+  targetType      ContentType
+  targetId        String
+  reason          String?          @db.Text
+  duration        Int?
+  previousStatus  String?
+  newStatus       String?
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  
+  @@index([moderatorId])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+  @@map("moderation_logs")
+}
+
+// ==================== GAMIFICATION SYSTEM ====================
+
+model Achievement {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  description     String    @db.Text
+  badgeImage      String    @db.VarChar(500)
+  points          Int       @default(10)
+  category        String
+  requirementType String
+  requirementValue Int
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  userAchievements UserAchievement[]
+  
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId   String
+  achievement     Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  earnedAt        DateTime    @default(now())
+  notifiedAt      DateTime?
+  
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model UserPoints {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalPoints     Int       @default(0)
+  level           Int       @default(1)
+  experiencePoints Int      @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("user_points")
+}
+
+// ==================== EVENT MANAGEMENT ====================
+
+model Event {
+  id              String            @id @default(cuid())
+  title           String
+  description     String            @db.Text
+  slug            String            @unique
+  eventType       EventType         @default(WEBINAR)
+  hostType        HostType          @default(USER)
+  organizationHostId String?
+  userHostId      String?
+  hostOrg         Organization?     @relation("hostOrganization", fields: [organizationHostId], references: [id])
+  hostUser        User?             @relation("hostUser", fields: [userHostId], references: [id])
+  startTime       DateTime
+  endTime         DateTime
+  timezone        String            @default("UTC")
+  location        String?
+  meetingLink     String?
+  maxAttendees    Int?
+  currentAttendees Int              @default(0)
+  price           Float?            @default(0)
+  currency        String            @default("USD")
+  coverImage      String?
+  status          EventStatus       @default(SCHEDULED)
+  recordingUrl    String?
+  slidesUrl       String?
+  tags            String[]
+  isDeleted       Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  registrations   EventRegistration[]
+  feedback        EventFeedback[]
+  attachments     EventAttachment[]
+  
+  @@index([eventType])
+  @@index([startTime])
+  @@index([status])
+  @@map("events")
+}
+
+model EventRegistration {
+  id              String    @id @default(cuid())
+  eventId         String
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status          RegistrationStatus @default(REGISTERED)
+  attendedAt      DateTime?
+  feedbackGiven   Boolean   @default(false)
+  registeredAt    DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@unique([eventId, userId])
+  @@index([status])
+  @@map("event_registrations")
+}
+
+model EventFeedback {
+  id              String    @id @default(cuid())
+  eventId         String
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating          Int
+  comment         String?   @db.Text
+  wouldRecommend  Boolean?
+  createdAt       DateTime  @default(now())
+  
+  @@unique([eventId, userId])
+  @@map("event_feedback")
+}
+
+model EventAttachment {
+  id              String    @id @default(cuid())
+  eventId         String
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  documentId      String
+  document        Document  @relation(fields: [documentId], references: [iddocument], onDelete: Cascade)
+  attachmentType  String
+  createdAt       DateTime  @default(now())
+  
+  @@map("event_attachments")
+}
+
+// ==================== CONTENT INTERACTIONS ====================
+
+model ContentLike {
+  id              String      @id @default(cuid())
+  contentId       String
+  contentType     ContentType
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
+  
+  @@unique([contentId, contentType, userId])
+  @@index([contentId, contentType])
+  @@map("content_likes")
+}
+
+model ContentFlag {
+  id              String      @id @default(cuid())
+  contentId       String
+  contentType     ContentType
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason          String
+  createdAt       DateTime    @default(now())
+  
+  @@unique([contentId, contentType, userId])
+  @@map("content_flags")
+}
+
+model ContentView {
+  id              String      @id @default(cuid())
+  contentId       String
+  contentType     ContentType
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ipAddress       String?
+  userAgent       String?
+  referrer        String?
+  viewedAt        DateTime    @default(now())
+  
+  @@index([contentId, contentType])
+  @@index([contentId, contentType, viewedAt])
+  @@index([viewedAt])
+  @@map("content_views")
+}
+
+model ContentShare {
+  id              String      @id @default(cuid())
+  contentId       String
+  contentType     ContentType
+  sharedBy        String
+  user            User        @relation(fields: [sharedBy], references: [id], onDelete: Cascade)
+  platform        String?
+  sharedAt        DateTime    @default(now())
+  
+  @@index([contentId, contentType])
+  @@map("content_shares")
+}
+
+// ==================== SAVED DRAFTS ====================
+
+model SavedDraft {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentType     ContentType
+  contentId       String?
+  data            Json
+  title           String?
+  autoSave        Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([userId, contentType])
+  @@map("saved_drafts")
+}
+
+// ==================== SPONSORED CONTENT ====================
+
+model SponsoredContent {
+  id              String          @id @default(cuid())
+  title           String
+  description     String          @db.Text
+  targetUrl       String
+  contentType     ContentType
+  contentId       String
+  sponsorId       String
+  sponsor         Organization    @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  budget          Float
+  spent           Float           @default(0)
+  impressions     Int             @default(0)
+  clicks          Int             @default(0)
+  startDate       DateTime
+  endDate         DateTime
+  status          SponsoredStatus @default(PENDING)
+  createdBy       String
+  creator         User            @relation(fields: [createdBy], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("sponsored_content")
+}
+
+// ==================== NOTIFICATION SYSTEM ====================
+
+model Notification {
+  notification_id String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            NotificationType
+  title           String
+  message         String       @db.Text
+  data            Json?
+  contentId       String?
+  contentType     ContentType?
+  isRead          Boolean      @default(false)
+  readAt          DateTime?
+  isDelivered     Boolean      @default(false)
+  deliveredAt     DateTime?
+  emailSent       Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  
+  @@index([userId, isRead])
+  @@index([userId, isRead, createdAt])
+  @@index([type, createdAt])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ==================== ANALYTICS & ENGAGEMENT ====================
+
+model UserActivityLog {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityType    String
+  contentId       String?
+  contentType     ContentType?
+  metadata        Json?
+  ipAddress       String?
+  userAgent       String?
+  sessionId       String?
+  createdAt       DateTime    @default(now())
+  
+  @@index([userId, activityType])
+  @@index([createdAt])
+  @@index([sessionId])
+  @@map("user_activity_logs")
+}
+
+model DailyAnalytics {
+  id              String      @id @default(cuid())
+  date            DateTime    @unique
+  totalUsers      Int         @default(0)
+  activeUsers     Int         @default(0)
+  newUsers        Int         @default(0)
+  totalContent    Int         @default(0)
+  newContent      Int         @default(0)
+  totalInteractions Int       @default(0)
+  totalViews      Int         @default(0)
+  totalShares     Int         @default(0)
+  metadata        Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@map("daily_analytics")
 }
