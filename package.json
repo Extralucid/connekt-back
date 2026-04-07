@@ -14,7 +14,16 @@
     "start:prod": "NODE_ENV=production && pm2 start ecosystem.config.cjs",
     "dev": "nodemon src/server.js",
     "seed": "node prisma/seed.js",
-    "seed:reset": "npx prisma migrate reset && yarn run seed"
+    "seed:reset": "npx prisma migrate reset && yarn run seed",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration --runInBand",
+    "test:auth": "jest tests/integration/auth.test.js",
+    "test:posts": "jest tests/integration/posts.test.js",
+    "test:jobs": "jest tests/integration/jobs.test.js",
+    "test:forum": "jest tests/integration/forum.test.js"
   },
   "repository": "https://gitlab.com/n3v4d4h/mmcop-api.git",
   "author": "maqom",
@@ -71,9 +80,13 @@
     "@types/cors": "^2.8.17",
     "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.21",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "esbuild-register": "^3.6.0",
+    "jest": "^30.3.0",
+    "jest-mock-extended": "^4.0.0",
     "nodemon": "^3.1.7",
-    "pm2": "^6.0.8"
+    "pm2": "^6.0.8",
+    "supertest": "^7.2.2"
   }
 }

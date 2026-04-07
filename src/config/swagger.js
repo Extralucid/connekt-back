@@ -18,7 +18,7 @@ const options = {
     },
     servers: [
       {
-        url: process.env.APP_URL || 'http://localhost:3000',
+        url: process.env.APP_URL || 'http://localhost:4000',
         description: 'Development server',
       },
     ],
