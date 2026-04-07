@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "books" ADD COLUMN     "isbn" TEXT NOT NULL DEFAULT '9780596517748';

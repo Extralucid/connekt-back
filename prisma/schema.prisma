@@ -198,6 +198,7 @@ enum AppEventType {
 
 enum ChatRole {
   ADMIN
+  OWNER
   MODERATOR
   MEMBER
 }
@@ -253,72 +254,72 @@ model Parametre {
 // ==================== ORGANIZATION & ACCOUNT MANAGEMENT ====================
 
 model Organization {
-  id                String         @id @default(cuid())
-  name              String
-  slug              String         @unique
-  email             String         @unique
-  phone             String?
-  type              AccountType    @default(COMPANY)
-  status            AccountStatus  @default(PENDING_VERIFICATION)
-  logo              String?
-  coverImage        String?
-  description       String?        @db.Text
-  website           String?
-  address           String?
-  city              String?
-  country           String?
-  taxId             String?
-  verifiedAt        DateTime?
-  verifiedBy        String?
-  metadata          Json?
-  isDeleted         Boolean        @default(false)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  
-  users             OrganizationUser[]
-  departments       Department[]
-  postedJobs        Job[]
-  companyReviews    CompanyReview[]   @relation("employerOrganization")
-  hostedEvents      Event[]           @relation("hostOrganization")
-  sponsoredContent  SponsoredContent[]
-  
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  email       String        @unique
+  phone       String?
+  type        AccountType   @default(COMPANY)
+  status      AccountStatus @default(PENDING_VERIFICATION)
+  logo        String?
+  coverImage  String?
+  description String?       @db.Text
+  website     String?
+  address     String?
+  city        String?
+  country     String?
+  taxId       String?
+  verifiedAt  DateTime?
+  verifiedBy  String?
+  metadata    Json?
+  isDeleted   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  users            OrganizationUser[]
+  departments      Department[]
+  postedJobs       Job[]
+  companyReviews   CompanyReview[]    @relation("employerOrganization")
+  hostedEvents     Event[]            @relation("hostOrganization")
+  sponsoredContent SponsoredContent[]
+
   @@map("organizations")
 }
 
 model Department {
-  id              String         @id @default(cuid())
-  name            String
-  description     String?        @db.Text
-  organizationId  String
-  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parentDeptId    String?
-  parentDept      Department?     @relation("DeptHierarchy", fields: [parentDeptId], references: [id])
-  subDepartments  Department[]    @relation("DeptHierarchy")
-  headUserId      String?
-  headUser        User?           @relation("DepartmentHead", fields: [headUserId], references: [id])
-  isDeleted       Boolean         @default(false)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  
-  users           OrganizationUser[]
-  
+  id             String       @id @default(cuid())
+  name           String
+  description    String?      @db.Text
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parentDeptId   String?
+  parentDept     Department?  @relation("DeptHierarchy", fields: [parentDeptId], references: [id])
+  subDepartments Department[] @relation("DeptHierarchy")
+  headUserId     String?
+  headUser       User?        @relation("DepartmentHead", fields: [headUserId], references: [id])
+  isDeleted      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  users OrganizationUser[]
+
   @@map("departments")
 }
 
 model OrganizationUser {
-  id              String         @id @default(cuid())
-  userId          String
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organizationId  String
-  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  departmentId    String?
-  department      Department?    @relation(fields: [departmentId], references: [id])
-  role            OrganizationRole
-  title           String?
-  isPrimaryContact Boolean        @default(false)
-  joinedAt        DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  
+  id               String           @id @default(cuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId   String
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  departmentId     String?
+  department       Department?      @relation(fields: [departmentId], references: [id])
+  role             OrganizationRole
+  title            String?
+  isPrimaryContact Boolean          @default(false)
+  joinedAt         DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
   @@unique([userId, organizationId])
   @@map("organization_users")
 }
@@ -326,122 +327,122 @@ model OrganizationUser {
 // ==================== ENHANCED USER MODEL ====================
 
 model User {
-  id                  String                @id @default(cuid())
-  email               String?               @unique @db.VarChar(255)
-  phone               String                @unique @db.VarChar(255)
+  id                  String            @id @default(cuid())
+  email               String?           @unique @db.VarChar(255)
+  phone               String            @unique @db.VarChar(255)
   pwd_hash            String
-  codeuser            String                @db.VarChar(250)
-  unom                String?               @db.VarChar(250)
-  uprenom             String?               @db.VarChar(250)
-  display_name        String?               @db.VarChar(250)
-  username            String?               @unique
-  registration_date   DateTime?             @db.Date
-  last_login          DateTime?             @db.Date
-  is_banned           Boolean               @default(false)
-  profile_picture_url String?               @db.VarChar(500)
-  cover_photo_url     String?               @db.VarChar(500)
-  bio                 String?               @db.Text
+  codeuser            String            @db.VarChar(250)
+  unom                String?           @db.VarChar(250)
+  uprenom             String?           @db.VarChar(250)
+  display_name        String?           @db.VarChar(250)
+  username            String?           @unique
+  registration_date   DateTime?         @db.Date
+  last_login          DateTime?         @db.Date
+  is_banned           Boolean           @default(false)
+  profile_picture_url String?           @db.VarChar(500)
+  cover_photo_url     String?           @db.VarChar(500)
+  bio                 String?           @db.Text
   dateOfBirth         DateTime?
   gender              String?
   location            String?
-  timezone            String?               @default("UTC")
-  email_verified_at   DateTime?             @db.Date
+  timezone            String?           @default("UTC")
+  email_verified_at   DateTime?         @db.Date
   phone_verified_at   DateTime?
-  two_factor_enabled  Boolean               @default(false)
+  two_factor_enabled  Boolean           @default(false)
   two_factor_secret   String?
-  usession            String?               @db.VarChar(250)
-  accountType         AccountType           @default(INDIVIDUAL)
-  status              AccountStatus         @default(ACTIVE)
+  usession            String?           @db.VarChar(250)
+  accountType         AccountType       @default(INDIVIDUAL)
+  status              AccountStatus     @default(ACTIVE)
   lastActiveAt        DateTime?
-  mobileSettings      Json?                 @default("{}")
+  mobileSettings      Json?             @default("{}")
   appVersion          String?
   platform            String?
   lastMobileLogin     DateTime?
   metadata            Json?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  isDeleted           Boolean?              @default(false)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  isDeleted           Boolean?          @default(false)
   // Message reactions
-  messageReactions     MessageReaction[]
-  
-  // Moderated reports
-  moderatedReports     ContentReport[]        @relation("moderatedReports")
+  messageReactions    MessageReaction[]
 
-  organizations         OrganizationUser[]
-  documents             Document[]
-  userRoles             UserRole[]
-  refreshTokens         RefreshToken[]
-  auditLogs             AuditLog[]
-  posts                 Post[]
-  comments              Comment[]
-  topics                Topic[]
-  replies               Reply[]
-  votes                 Vote[]
-  notifications         Notification[]
-  jobs                  Job[]
-  bookmarks             Bookmark[]
-  jobAlerts             JobAlert[]
-  reviews               CompanyReview[]       @relation(name: "utilisateur")
-  applications          Application[]
-  viewedJobs            JobView[]
-  companyReview         CompanyReview[]       @relation(name: "employeur")
-  chatParticipants      ChatParticipant[]
-  chatMessages          ChatMessage[]
-  chatInvites           ChatInvite[]
-  chatAuditLogs         ChatAuditLog[]
-  podcasts              Podcast[]
-  listens               Listen[]
-  podcastSubscriptions  PodcastSubscription[]
-  podcastComments       PodcastComment[]
-  books                 UserBook[]
-  tutorials             Tutorial[]
-  tutorialProgress      TutorialProgress[]
-  preferences           UserPreference?       @relation(fields: [preferenceId], references: [preference_id])
-  preferenceId          String?               @unique
-  emailVerifications    EmailVerification[]
-  phoneVerifications    PhoneVerification[]
-  passwordResets        PasswordReset[]
-  resourcePermissions   ResourcePermission[]
-  
+  // Moderated reports
+  moderatedReports ContentReport[] @relation("moderatedReports")
+
+  organizations        OrganizationUser[]
+  documents            Document[]
+  userRoles            UserRole[]
+  refreshTokens        RefreshToken[]
+  auditLogs            AuditLog[]
+  posts                Post[]
+  comments             Comment[]
+  topics               Topic[]
+  replies              Reply[]
+  votes                Vote[]
+  notifications        Notification[]
+  jobs                 Job[]
+  bookmarks            Bookmark[]
+  jobAlerts            JobAlert[]
+  reviews              CompanyReview[]       @relation(name: "utilisateur")
+  applications         Application[]
+  viewedJobs           JobView[]
+  companyReview        CompanyReview[]       @relation(name: "employeur")
+  chatParticipants     ChatParticipant[]
+  chatMessages         ChatMessage[]
+  chatInvites          ChatInvite[]
+  chatAuditLogs        ChatAuditLog[]
+  podcasts             Podcast[]
+  listens              Listen[]
+  podcastSubscriptions PodcastSubscription[]
+  podcastComments      PodcastComment[]
+  books                UserBook[]
+  tutorials            Tutorial[]
+  tutorialProgress     TutorialProgress[]
+  preferences          UserPreference?       @relation(fields: [preferenceId], references: [preference_id])
+  preferenceId         String?               @unique
+  emailVerifications   EmailVerification[]
+  phoneVerifications   PhoneVerification[]
+  passwordResets       PasswordReset[]
+  resourcePermissions  ResourcePermission[]
+
   // Mobile and device relations
-  deviceTokens          DeviceToken[]
-  sessionTokens         SessionToken[]
-  pushNotifications     PushNotification[]
-  mobileAnalytics       MobileAnalytics[]
-  offlineSyncQueue      OfflineSyncQueue[]
-  apiRateLimits         ApiRateLimit[]
-  mobileContentPrefs    MobileContentPreference[]
-  
+  deviceTokens       DeviceToken[]
+  sessionTokens      SessionToken[]
+  pushNotifications  PushNotification[]
+  mobileAnalytics    MobileAnalytics[]
+  offlineSyncQueue   OfflineSyncQueue[]
+  apiRateLimits      ApiRateLimit[]
+  mobileContentPrefs MobileContentPreference[]
+
   // Moderation relations
-  contentReports        ContentReport[]        @relation("reporter")
-  receivedReports       ContentReport[]        @relation("reportedUser")
-  moderationActions     ModerationLog[]        @relation("moderatorActions")
-  adminAuditLogs        AdminAuditLog[]        @relation("adminActions")
-  
+  contentReports    ContentReport[] @relation("reporter")
+  receivedReports   ContentReport[] @relation("reportedUser")
+  moderationActions ModerationLog[] @relation("moderatorActions")
+  adminAuditLogs    AdminAuditLog[] @relation("adminActions")
+
   // Gamification
-  userAchievements      UserAchievement[]
-  userPoints            UserPoints?
-  
+  userAchievements UserAchievement[]
+  userPoints       UserPoints?
+
   // Events
-  eventRegistrations    EventRegistration[]
-  eventFeedback         EventFeedback[]
-  hostedEvents          Event[]                @relation("hostUser")
-  
+  eventRegistrations EventRegistration[]
+  eventFeedback      EventFeedback[]
+  hostedEvents       Event[]             @relation("hostUser")
+
   // Content interactions
-  savedDrafts           SavedDraft[]
-  contentLikes          ContentLike[]
-  contentFlags          ContentFlag[]
-  contentViews          ContentView[]
-  contentShares         ContentShare[]
-  sponsoredContent      SponsoredContent[]
-  userActivityLogs      UserActivityLog[]
-  
+  savedDrafts      SavedDraft[]
+  contentLikes     ContentLike[]
+  contentFlags     ContentFlag[]
+  contentViews     ContentView[]
+  contentShares    ContentShare[]
+  sponsoredContent SponsoredContent[]
+  userActivityLogs UserActivityLog[]
+
   // Messages
-  directMessages        DirectMessage[]        @relation("sender")
-  receivedMessages      DirectMessage[]        @relation("receiver")
-  
+  directMessages   DirectMessage[] @relation("sender")
+  receivedMessages DirectMessage[] @relation("receiver")
+
   // Department head
-  headedDepartments     Department[]           @relation("DepartmentHead")
+  headedDepartments Department[] @relation("DepartmentHead")
 
   @@index([email])
   @@index([phone])
@@ -454,22 +455,22 @@ model User {
 
 // Device Tokens for Push Notifications
 model DeviceToken {
-  id                String    @id @default(cuid())
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token             String    @unique
-  platform          String
-  deviceId          String    @unique
-  deviceName        String?
-  deviceModel       String?
-  osVersion         String?
-  appVersion        String?
-  isActive          Boolean   @default(true)
-  lastUsedAt        DateTime  @default(now())
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String   @unique
+  platform    String
+  deviceId    String   @unique
+  deviceName  String?
+  deviceModel String?
+  osVersion   String?
+  appVersion  String?
+  isActive    Boolean  @default(true)
+  lastUsedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  sessionTokens     SessionToken[]
+  sessionTokens SessionToken[]
 
   @@index([userId])
   @@index([token])
@@ -478,17 +479,17 @@ model DeviceToken {
 
 // Mobile Session Management
 model SessionToken {
-  id                String    @id @default(cuid())
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token             String    @unique
-  deviceTokenId     String?
-  deviceToken       DeviceToken? @relation(fields: [deviceTokenId], references: [id])
-  refreshToken      String    @unique
-  expiresAt         DateTime
-  lastActiveAt      DateTime  @default(now())
-  createdAt         DateTime  @default(now())
-  
+  id            String       @id @default(cuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token         String       @unique
+  deviceTokenId String?
+  deviceToken   DeviceToken? @relation(fields: [deviceTokenId], references: [id])
+  refreshToken  String       @unique
+  expiresAt     DateTime
+  lastActiveAt  DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+
   @@index([userId])
   @@index([expiresAt])
   @@map("session_tokens")
@@ -496,38 +497,38 @@ model SessionToken {
 
 // Mobile App Configurations
 model MobileConfig {
-  id                String    @id @default(cuid())
-  key               String    @unique
-  value             Json
-  description       String?
-  platform          String?
-  minAppVersion     String?
-  isActive          Boolean   @default(true)
-  updatedBy         String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id            String   @id @default(cuid())
+  key           String   @unique
+  value         Json
+  description   String?
+  platform      String?
+  minAppVersion String?
+  isActive      Boolean  @default(true)
+  updatedBy     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("mobile_configs")
 }
 
 // Push Notifications Queue
 model PushNotification {
-  id                String    @id @default(cuid())
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title             String
-  body              String
-  data              Json?
-  imageUrl          String?
-  priority          String    @default("normal")
-  status            String    @default("pending")
-  sentAt            DateTime?
-  deliveredAt       DateTime?
-  error             String?
-  createdAt         DateTime  @default(now())
-  retryCount        Int       @default(0)
-  nextRetryAt       DateTime?
-  
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  body        String
+  data        Json?
+  imageUrl    String?
+  priority    String    @default("normal")
+  status      String    @default("pending")
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+  retryCount  Int       @default(0)
+  nextRetryAt DateTime?
+
   @@index([userId])
   @@index([status])
   @@index([createdAt])
@@ -536,18 +537,18 @@ model PushNotification {
 
 // Mobile Analytics
 model MobileAnalytics {
-  id                String    @id @default(cuid())
-  userId            String?
-  user              User?     @relation(fields: [userId], references: [id])
-  sessionId         String
-  eventType         String
-  screenName        String?
-  duration          Int?
-  metadata          Json?
-  deviceInfo        Json?
-  ipAddress         String?
-  createdAt         DateTime  @default(now())
-  
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  sessionId  String
+  eventType  String
+  screenName String?
+  duration   Int?
+  metadata   Json?
+  deviceInfo Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
   @@index([userId])
   @@index([sessionId])
   @@index([eventType])
@@ -557,19 +558,19 @@ model MobileAnalytics {
 
 // Offline Sync Queue
 model OfflineSyncQueue {
-  id                String    @id @default(cuid())
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  operation         String
-  entityType        String
-  entityId          String?
-  data              Json
-  status            String    @default("pending")
-  error             String?
-  retryCount        Int       @default(0)
-  createdAt         DateTime  @default(now())
-  syncedAt          DateTime?
-  
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  operation  String
+  entityType String
+  entityId   String?
+  data       Json
+  status     String    @default("pending")
+  error      String?
+  retryCount Int       @default(0)
+  createdAt  DateTime  @default(now())
+  syncedAt   DateTime?
+
   @@index([userId])
   @@index([status])
   @@index([createdAt])
@@ -578,13 +579,13 @@ model OfflineSyncQueue {
 
 // API Rate Limiting
 model ApiRateLimit {
-  id                String    @id @default(cuid())
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  endpoint          String
-  requests          Int       @default(1)
-  windowStart       DateTime  @default(now())
-  
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint    String
+  requests    Int      @default(1)
+  windowStart DateTime @default(now())
+
   @@unique([userId, endpoint, windowStart])
   @@index([userId, windowStart])
   @@map("api_rate_limits")
@@ -592,47 +593,47 @@ model ApiRateLimit {
 
 // Feature Flags
 model FeatureFlag {
-  id                String    @id @default(cuid())
-  name              String    @unique
+  id                String   @id @default(cuid())
+  name              String   @unique
   description       String?
-  isEnabled         Boolean   @default(false)
-  rolloutPercentage Int       @default(100)
+  isEnabled         Boolean  @default(false)
+  rolloutPercentage Int      @default(100)
   platforms         String[]
   minAppVersion     String?
   metadata          Json?
   createdBy         String?
   updatedBy         String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@map("feature_flags")
 }
 
 // Cached Content for Mobile
 model MobileCache {
-  id                String    @id @default(cuid())
-  cacheKey          String    @unique
-  data              Json
-  expiresAt         DateTime
-  createdAt         DateTime  @default(now())
-  
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique
+  data      Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
   @@index([expiresAt])
   @@map("mobile_cache")
 }
 
 // User Content Preferences
 model MobileContentPreference {
-  id                String    @id @default(cuid())
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contentType       ContentType
-  feedOrder         String    @default("recent")
-  notificationsEnabled Boolean @default(true)
-  quietHoursStart   String?
-  quietHoursEnd     String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  
+  id                   String      @id @default(cuid())
+  userId               String
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentType          ContentType
+  feedOrder            String      @default("recent")
+  notificationsEnabled Boolean     @default(true)
+  quietHoursStart      String?
+  quietHoursEnd        String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
   @@unique([userId, contentType])
   @@map("mobile_content_preferences")
 }
@@ -641,18 +642,18 @@ model MobileContentPreference {
 
 // Admin Audit Trail
 model AdminAuditLog {
-  id                String    @id @default(cuid())
-  adminId           String
-  admin             User      @relation("adminActions", fields: [adminId], references: [id], onDelete: Cascade)
-  action            String
-  targetType        String
-  targetId          String
-  oldValues         Json?
-  newValues         Json?
-  ipAddress         String
-  userAgent         String
-  createdAt         DateTime  @default(now())
-  
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      User     @relation("adminActions", fields: [adminId], references: [id], onDelete: Cascade)
+  action     String
+  targetType String
+  targetId   String
+  oldValues  Json?
+  newValues  Json?
+  ipAddress  String
+  userAgent  String
+  createdAt  DateTime @default(now())
+
   @@index([adminId])
   @@index([targetType, targetId])
   @@index([createdAt])
@@ -661,126 +662,126 @@ model AdminAuditLog {
 
 // Admin Dashboard Widgets Configuration
 model AdminWidget {
-  id                String    @id @default(cuid())
-  name              String    @unique
-  type              String
-  config            Json
-  permissions       String[]
-  displayOrder      Int
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  
+  id           String   @id @default(cuid())
+  name         String   @unique
+  type         String
+  config       Json
+  permissions  String[]
+  displayOrder Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   @@map("admin_widgets")
 }
 
 // System Health Checks
 model SystemHealth {
-  id                String    @id @default(cuid())
-  service           String
-  status            String
-  responseTime      Int?
-  errorRate         Float?
-  metadata          Json?
-  checkedAt         DateTime  @default(now())
-  
+  id           String   @id @default(cuid())
+  service      String
+  status       String
+  responseTime Int?
+  errorRate    Float?
+  metadata     Json?
+  checkedAt    DateTime @default(now())
+
   @@index([service, checkedAt])
   @@map("system_health")
 }
 
 // Scheduled Tasks
 model ScheduledTask {
-  id                String    @id @default(cuid())
-  name              String    @unique
-  cronExpression    String
-  handler           String
-  status            String    @default("active")
-  lastRunAt         DateTime?
-  nextRunAt         DateTime?
-  lastRunStatus     String?
-  lastRunError      String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  
+  id             String    @id @default(cuid())
+  name           String    @unique
+  cronExpression String
+  handler        String
+  status         String    @default("active")
+  lastRunAt      DateTime?
+  nextRunAt      DateTime?
+  lastRunStatus  String?
+  lastRunError   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
   @@index([status, nextRunAt])
   @@map("scheduled_tasks")
 }
 
 // API Endpoints Documentation
 model ApiEndpoint {
-  id                String    @id @default(cuid())
-  path              String    @unique
-  method            String
-  description       String
-  version           String    @default("1.0")
-  rateLimit         Int       @default(60)
-  requiredRoles     String[]
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  
+  id            String   @id @default(cuid())
+  path          String   @unique
+  method        String
+  description   String
+  version       String   @default("1.0")
+  rateLimit     Int      @default(60)
+  requiredRoles String[]
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   @@map("api_endpoints")
 }
 
 // Data Sync Configuration
 model SyncConfig {
-  id                String    @id @default(cuid())
-  entityType        String    @unique
-  syncInterval      Int       @default(300)
-  batchSize         Int       @default(50)
-  retentionDays     Int       @default(30)
-  isEnabled         Boolean   @default(true)
-  updatedAt         DateTime  @updatedAt
-  
+  id            String   @id @default(cuid())
+  entityType    String   @unique
+  syncInterval  Int      @default(300)
+  batchSize     Int      @default(50)
+  retentionDays Int      @default(30)
+  isEnabled     Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
+
   @@map("sync_configs")
 }
 
 // ==================== ENHANCED DOCUMENT SYSTEM ====================
 
 model Document {
-  iddocument        String          @id @default(cuid())
-  description       String?         @db.Text
-  fileUrl           String          @db.VarChar(500)
-  name              String
-  originalName      String
-  fileName          String          @unique
-  fileType          String?
-  mimeType          String?
-  fileExtension     String
-  fileSize          Int
-  storagePath       String
-  storageProvider   StorageProvider @default(LOCAL)
-  duration          Int?
-  thumbnailUrl      String?         @db.VarChar(500)
-  isPublic          Boolean         @default(false)
-  accessCount       Int             @default(0)
-  published         Boolean?        @default(true)
-  isDeleted         Boolean?        @default(false)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  userId            String?
-  User              User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  iddocument      String          @id @default(cuid())
+  description     String?         @db.Text
+  fileUrl         String          @db.VarChar(500)
+  name            String
+  originalName    String
+  fileName        String          @unique
+  fileType        String?
+  mimeType        String?
+  fileExtension   String
+  fileSize        Int
+  storagePath     String
+  storageProvider StorageProvider @default(LOCAL)
+  duration        Int?
+  thumbnailUrl    String?         @db.VarChar(500)
+  isPublic        Boolean         @default(false)
+  accessCount     Int             @default(0)
+  published       Boolean?        @default(true)
+  isDeleted       Boolean?        @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  userId          String?
+  User            User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  applications      ApplicationDoc[]
-  chatDocuments     ChatDocument[]
-  eventAttachments  EventAttachment[]
-  contentMedia      ContentMedia[]
-  
+  applications     ApplicationDoc[]
+  chatDocuments    ChatDocument[]
+  eventAttachments EventAttachment[]
+  contentMedia     ContentMedia[]
+
   @@index([userId])
   @@index([fileType])
   @@map("documents")
 }
 
 model ContentMedia {
-  id              String      @id @default(cuid())
-  contentId       String
-  contentType     ContentType
-  documentId      String
-  document        Document    @relation(fields: [documentId], references: [iddocument], onDelete: Cascade)
-  displayOrder    Int         @default(0)
-  isFeatured      Boolean     @default(false)
-  createdAt       DateTime    @default(now())
-  
+  id           String      @id @default(cuid())
+  contentId    String
+  contentType  ContentType
+  documentId   String
+  document     Document    @relation(fields: [documentId], references: [iddocument], onDelete: Cascade)
+  displayOrder Int         @default(0)
+  isFeatured   Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+
   @@unique([contentId, contentType, documentId])
   @@index([contentId, contentType])
   @@map("content_media")
@@ -1031,27 +1032,27 @@ model PostTag {
 // ==================== ENHANCED COMMENT SYSTEM ====================
 
 model Comment {
-  comment_id         String           @id @default(cuid())
-  content            String           @db.Text
-  authorId           String
-  author             User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parentComment      Comment?         @relation("CommentHierarchy", fields: [parentCommentId], references: [comment_id])
-  parentCommentId    String?
-  childComments      Comment[]        @relation("CommentHierarchy")
-  targetId           String
-  targetType         ContentType
-  isEdited           Boolean          @default(false)
-  editedAt           DateTime?
-  isDeleted          Boolean          @default(false)
-  isApproved         Boolean          @default(true)
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  
-  postId             String?
-  post               Post?            @relation(fields: [postId], references: [post_id])
-  topicId            String?
-  topic              Topic?           @relation(fields: [topicId], references: [topic_id])
-  
+  comment_id      String      @id @default(cuid())
+  content         String      @db.Text
+  authorId        String
+  author          User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentComment   Comment?    @relation("CommentHierarchy", fields: [parentCommentId], references: [comment_id])
+  parentCommentId String?
+  childComments   Comment[]   @relation("CommentHierarchy")
+  targetId        String
+  targetType      ContentType
+  isEdited        Boolean     @default(false)
+  editedAt        DateTime?
+  isDeleted       Boolean     @default(false)
+  isApproved      Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  postId  String?
+  post    Post?   @relation(fields: [postId], references: [post_id])
+  topicId String?
+  topic   Topic?  @relation(fields: [topicId], references: [topic_id])
+
   @@index([targetId, targetType])
   @@index([authorId])
   @@index([createdAt])
@@ -1128,31 +1129,31 @@ model Vote {
 // ==================== JOBS MANAGEMENT ====================
 
 model Job {
-  job_id           String        @id @default(uuid())
-  title            String        @db.Text
-  description      String        @db.Text
-  jobType          JobType       @default(FULL_TIME)
-  location         String?       @db.VarChar(250)
-  remote           Boolean       @default(false)
-  salaryMin        Int?
-  salaryMax        Int?
-  salaryCurrency   String?       @default("USD")
-  expiryDate       DateTime?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  employerId       String
-  employer         User          @relation(fields: [employerId], references: [id])
-  sponsoredById    String?
-  sponsoredBy      Organization? @relation(fields: [sponsoredById], references: [id])
-  isPromoted       Boolean       @default(false)
-  promotionEndsAt  DateTime?
-  views            Int           @default(0)
-  applicationsCount Int          @default(0)
-  applications     Application[]
-  categories       JobCategory[]
-  skills           JobSkill[]
-  bookmarks        Bookmark[]
-  jobviews         JobView[]
+  job_id            String        @id @default(uuid())
+  title             String        @db.Text
+  description       String        @db.Text
+  jobType           JobType       @default(FULL_TIME)
+  location          String?       @db.VarChar(250)
+  remote            Boolean       @default(false)
+  salaryMin         Int?
+  salaryMax         Int?
+  salaryCurrency    String?       @default("USD")
+  expiryDate        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  employerId        String
+  employer          User          @relation(fields: [employerId], references: [id])
+  sponsoredById     String?
+  sponsoredBy       Organization? @relation(fields: [sponsoredById], references: [id])
+  isPromoted        Boolean       @default(false)
+  promotionEndsAt   DateTime?
+  views             Int           @default(0)
+  applicationsCount Int           @default(0)
+  applications      Application[]
+  categories        JobCategory[]
+  skills            JobSkill[]
+  bookmarks         Bookmark[]
+  jobviews          JobView[]
 
   @@index([employerId, createdAt])
   @@index([isPromoted, promotionEndsAt])
@@ -1260,21 +1261,21 @@ model JobAlert {
 }
 
 model CompanyReview {
-  review_id  String   @id @default(uuid())
-  rating     Int      @db.Integer
-  title      String   @db.VarChar(250)
-  review     String   @db.VarChar(250)
-  pros       String[]
-  cons       String[]
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], name: "utilisateur")
-  employerId String
-  employer   User     @relation(fields: [employerId], references: [id], name: "employeur")
+  review_id      String        @id @default(uuid())
+  rating         Int           @db.Integer
+  title          String        @db.VarChar(250)
+  review         String        @db.VarChar(250)
+  pros           String[]
+  cons           String[]
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], name: "utilisateur")
+  employerId     String
+  employer       User          @relation(fields: [employerId], references: [id], name: "employeur")
   organizationId String?
-  organization Organization? @relation("employerOrganization", fields: [organizationId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  isApproved Boolean  @default(false)
+  organization   Organization? @relation("employerOrganization", fields: [organizationId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  isApproved     Boolean       @default(false)
 
   @@map("company_reviews")
 }
@@ -1306,14 +1307,14 @@ model JobView {
 // ==================== CHAT SYSTEM ====================
 
 model ChatRoom {
-  room_id      String            @id @default(uuid())
-  name         String?
-  isGroup      Boolean           @default(false)
-  description  String?           @db.Text
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  participants ChatParticipant[]
-  messages     ChatMessage[]
+  room_id       String            @id @default(uuid())
+  name          String?
+  isGroup       Boolean           @default(false)
+  description   String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  participants  ChatParticipant[]
+  messages      ChatMessage[]
   chatInvites   ChatInvite[]
   chatAuditLogs ChatAuditLog[]
 
@@ -1337,25 +1338,25 @@ model ChatParticipant {
 }
 
 model ChatMessage {
-  message_id      String        @id @default(cuid())
-  content         String        @db.Text
-  roomId          String
-  room            ChatRoom      @relation(fields: [roomId], references: [room_id], onDelete: Cascade)
-  senderId        String
-  sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  replyToId       String?
-  replyTo         ChatMessage?  @relation("MessageReplies", fields: [replyToId], references: [message_id])
-  isDeleted       Boolean       @default(false)
-  isEdited        Boolean       @default(false)
-  editedAt        DateTime?
-  deletedAt       DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  
-  documents       ChatDocument[]
-  reactions       MessageReaction[]
-  replies         ChatMessage[] @relation("MessageReplies")
-  
+  message_id String       @id @default(cuid())
+  content    String       @db.Text
+  roomId     String
+  room       ChatRoom     @relation(fields: [roomId], references: [room_id], onDelete: Cascade)
+  senderId   String
+  sender     User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyToId  String?
+  replyTo    ChatMessage? @relation("MessageReplies", fields: [replyToId], references: [message_id])
+  isDeleted  Boolean      @default(false)
+  isEdited   Boolean      @default(false)
+  editedAt   DateTime?
+  deletedAt  DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  documents ChatDocument[]
+  reactions MessageReaction[]
+  replies   ChatMessage[]     @relation("MessageReplies")
+
   @@index([roomId])
   @@index([senderId])
   @@index([createdAt])
@@ -1363,26 +1364,26 @@ model ChatMessage {
 }
 
 model ChatDocument {
-  id          String      @id @default(cuid())
-  messageId   String
-  message     ChatMessage @relation(fields: [messageId], references: [message_id], onDelete: Cascade)
-  documentId  String
-  document    Document    @relation(fields: [documentId], references: [iddocument], onDelete: Cascade)
-  createdAt   DateTime    @default(now())
-  
+  id         String      @id @default(cuid())
+  messageId  String
+  message    ChatMessage @relation(fields: [messageId], references: [message_id], onDelete: Cascade)
+  documentId String
+  document   Document    @relation(fields: [documentId], references: [iddocument], onDelete: Cascade)
+  createdAt  DateTime    @default(now())
+
   @@unique([messageId, documentId])
   @@map("chat_documents")
 }
 
 model MessageReaction {
-  id          String      @id @default(cuid())
-  messageId   String
-  message     ChatMessage @relation(fields: [messageId], references: [message_id], onDelete: Cascade)
-  userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reaction    String
-  createdAt   DateTime    @default(now())
-  
+  id        String      @id @default(cuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [message_id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reaction  String
+  createdAt DateTime    @default(now())
+
   @@unique([messageId, userId, reaction])
   @@map("message_reactions")
 }
@@ -1419,21 +1420,21 @@ model ChatAuditLog {
 // ==================== DIRECT MESSAGING ====================
 
 model DirectMessage {
-  id              String      @id @default(cuid())
-  senderId        String
-  sender          User        @relation(fields: [senderId], references: [id], onDelete: Cascade, name: "sender")
-  receiverId      String
-  receiver        User        @relation(fields: [receiverId], references: [id], onDelete: Cascade, name: "receiver")
-  message         String      @db.Text
-  isRead          Boolean     @default(false)
-  readAt          DateTime?
-  replyToId       String?
-  replyTo         DirectMessage? @relation("DMReplies", fields: [replyToId], references: [id])
-  replies         DirectMessage[] @relation("DMReplies")
-  isDeleted       Boolean     @default(false)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
+  id         String          @id @default(cuid())
+  senderId   String
+  sender     User            @relation(fields: [senderId], references: [id], onDelete: Cascade, name: "sender")
+  receiverId String
+  receiver   User            @relation(fields: [receiverId], references: [id], onDelete: Cascade, name: "receiver")
+  message    String          @db.Text
+  isRead     Boolean         @default(false)
+  readAt     DateTime?
+  replyToId  String?
+  replyTo    DirectMessage?  @relation("DMReplies", fields: [replyToId], references: [id])
+  replies    DirectMessage[] @relation("DMReplies")
+  isDeleted  Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
   @@index([senderId, receiverId])
   @@index([createdAt])
   @@map("direct_messages")
@@ -1442,55 +1443,55 @@ model DirectMessage {
 // ==================== PODCAST SYSTEM ====================
 
 model Podcast {
-  podcast_id      String                @id @default(uuid())
-  title           String
-  description     String
-  coverImage      String?
-  author          User                  @relation(fields: [authorId], references: [id])
-  authorId        String
-  episodes        Episode[]
-  isDeleted       Boolean               @default(false)
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  subscribers     PodcastSubscription[]
-  isExplicit      Boolean               @default(false)
-  language        String                @default("en")
-  totalEpisodes   Int                   @default(0)
-  totalListens    Int                   @default(0)
-  rating          Float?
-  categories      String[]
+  podcast_id    String                @id @default(uuid())
+  title         String
+  description   String
+  coverImage    String?
+  author        User                  @relation(fields: [authorId], references: [id])
+  authorId      String
+  episodes      Episode[]
+  isDeleted     Boolean               @default(false)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  subscribers   PodcastSubscription[]
+  isExplicit    Boolean               @default(false)
+  language      String                @default("en")
+  totalEpisodes Int                   @default(0)
+  totalListens  Int                   @default(0)
+  rating        Float?
+  categories    String[]
 
   @@map("podcasts")
 }
 
 model Episode {
-  episode_id      String           @id @default(uuid())
-  title           String
-  description     String
-  audioUrl        String
-  duration        Int
-  publishDate     DateTime         @default(now())
-  podcast         Podcast          @relation(fields: [podcastId], references: [podcast_id])
-  podcastId       String
-  isDeleted       Boolean          @default(false)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  listens         Listen[]
-  transcript      Transcript?
-  comments        PodcastComment[]
+  episode_id  String           @id @default(uuid())
+  title       String
+  description String
+  audioUrl    String
+  duration    Int
+  publishDate DateTime         @default(now())
+  podcast     Podcast          @relation(fields: [podcastId], references: [podcast_id])
+  podcastId   String
+  isDeleted   Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  listens     Listen[]
+  transcript  Transcript?
+  comments    PodcastComment[]
 
   @@map("episodes")
 }
 
 model Listen {
-  listen_id    String   @id @default(uuid())
-  episode      Episode  @relation(fields: [episodeId], references: [episode_id])
-  episodeId    String
-  user         User?    @relation(fields: [userId], references: [id])
-  userId       String?
-  listenedAt   DateTime @default(now())
-  progress     Int?     @default(0)
-  completed    Boolean  @default(false)
+  listen_id  String   @id @default(uuid())
+  episode    Episode  @relation(fields: [episodeId], references: [episode_id])
+  episodeId  String
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+  listenedAt DateTime @default(now())
+  progress   Int?     @default(0)
+  completed  Boolean  @default(false)
 }
 
 model Transcript {
@@ -1541,10 +1542,13 @@ model Book {
   title       String
   description String
   coverImage  String?
+  isbn        String?        @default("9780596517748")
+  publisher   String?        @default("O'Reilly Media")
   author      String
   price       Float?
   fileUrl     String?
   pages       Json?
+  language    String?        @default("en")
   categories  BookCategory[]
   isDeleted   Boolean        @default(false)
   createdAt   DateTime       @default(now())
@@ -1585,28 +1589,28 @@ model UserBook {
 // ==================== TUTORIALS SYSTEM ====================
 
 model Tutorial {
-  tutorial_id      String             @id @default(uuid())
-  title            String
-  description      String
-  thumbnail        String?
-  author           User               @relation(fields: [authorId], references: [id])
-  authorId         String
-  sections         TutorialSection[]
-  difficulty       String             @default("beginner")
-  duration         Int?
-  categories       TutorialCategory[]
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  TutorialProgress TutorialProgress[]
-  isDeleted        Boolean            @default(false)
-  rating           Float?
-  totalEnrollments Int                @default(0)
-  totalCompletions Int                @default(0)
-  prerequisites    String[]
-  learningOutcomes String[]
-  certificateEnabled Boolean          @default(false)
-  price            Float?             @default(0)
-  isPaid           Boolean            @default(false)
+  tutorial_id        String             @id @default(uuid())
+  title              String
+  description        String
+  thumbnail          String?
+  author             User               @relation(fields: [authorId], references: [id])
+  authorId           String
+  sections           TutorialSection[]
+  difficulty         String             @default("beginner")
+  duration           Int?
+  categories         TutorialCategory[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  TutorialProgress   TutorialProgress[]
+  isDeleted          Boolean            @default(false)
+  rating             Float?
+  totalEnrollments   Int                @default(0)
+  totalCompletions   Int                @default(0)
+  prerequisites      String[]
+  learningOutcomes   String[]
+  certificateEnabled Boolean            @default(false)
+  price              Float?             @default(0)
+  isPaid             Boolean            @default(false)
 
   @@map("tutorials")
 }
@@ -1627,17 +1631,17 @@ model TutorialSection {
 }
 
 model TutorialProgress {
-  tutprogress_id String   @id @default(uuid())
-  user           User     @relation(fields: [userId], references: [id])
+  tutprogress_id String    @id @default(uuid())
+  user           User      @relation(fields: [userId], references: [id])
   userId         String
-  tutorial       Tutorial @relation(fields: [tutorialId], references: [tutorial_id])
+  tutorial       Tutorial  @relation(fields: [tutorialId], references: [tutorial_id])
   tutorialId     String
   sectionId      String?
-  isDeleted      Boolean  @default(false)
-  isDone         Boolean  @default(false)
+  isDeleted      Boolean   @default(false)
+  isDone         Boolean   @default(false)
   completedAt    DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@unique([userId, tutorialId])
   @@map("tutorial_progress")
@@ -1676,43 +1680,43 @@ model UserPreference {
 // ==================== MODERATION SYSTEM ====================
 
 model ContentReport {
-  id              String         @id @default(cuid())
-  contentId       String
-  contentType     ContentType
-  reporterId      String
-  reporter        User           @relation(fields: [reporterId], references: [id], onDelete: Cascade, name: "reporter")
-  reportedUserId  String?
-  reportedUser    User?          @relation(fields: [reportedUserId], references: [id], onDelete: SetNull, name: "reportedUser")
-  reason          ReportReason
-  description     String?        @db.Text
-  status          ModerationStatus @default(PENDING)
-  moderatedBy     String?
-  moderator       User?          @relation("moderatedReports", fields: [moderatedBy], references: [id])
-  moderationNote  String?        @db.Text
-  actionTaken     ModerationAction?
-  resolvedAt      DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  
+  id             String            @id @default(cuid())
+  contentId      String
+  contentType    ContentType
+  reporterId     String
+  reporter       User              @relation(fields: [reporterId], references: [id], onDelete: Cascade, name: "reporter")
+  reportedUserId String?
+  reportedUser   User?             @relation(fields: [reportedUserId], references: [id], onDelete: SetNull, name: "reportedUser")
+  reason         ReportReason
+  description    String?           @db.Text
+  status         ModerationStatus  @default(PENDING)
+  moderatedBy    String?
+  moderator      User?             @relation("moderatedReports", fields: [moderatedBy], references: [id])
+  moderationNote String?           @db.Text
+  actionTaken    ModerationAction?
+  resolvedAt     DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
   @@index([contentId, contentType])
   @@index([status])
   @@map("content_reports")
 }
 
 model ModerationLog {
-  id              String           @id @default(cuid())
-  moderatorId     String
-  moderator       User             @relation("moderatorActions", fields: [moderatorId], references: [id], onDelete: Cascade)
-  action          ModerationAction
-  targetType      ContentType
-  targetId        String
-  reason          String?          @db.Text
-  duration        Int?
-  previousStatus  String?
-  newStatus       String?
-  metadata        Json?
-  createdAt       DateTime         @default(now())
-  
+  id             String           @id @default(cuid())
+  moderatorId    String
+  moderator      User             @relation("moderatorActions", fields: [moderatorId], references: [id], onDelete: Cascade)
+  action         ModerationAction
+  targetType     ContentType
+  targetId       String
+  reason         String?          @db.Text
+  duration       Int?
+  previousStatus String?
+  newStatus      String?
+  metadata       Json?
+  createdAt      DateTime         @default(now())
+
   @@index([moderatorId])
   @@index([targetType, targetId])
   @@index([createdAt])
@@ -1722,84 +1726,84 @@ model ModerationLog {
 // ==================== GAMIFICATION SYSTEM ====================
 
 model Achievement {
-  id              String    @id @default(cuid())
-  name            String    @unique
-  description     String    @db.Text
-  badgeImage      String    @db.VarChar(500)
-  points          Int       @default(10)
-  category        String
-  requirementType String
+  id               String   @id @default(cuid())
+  name             String   @unique
+  description      String   @db.Text
+  badgeImage       String   @db.VarChar(500)
+  points           Int      @default(10)
+  category         String
+  requirementType  String
   requirementValue Int
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
   userAchievements UserAchievement[]
-  
+
   @@map("achievements")
 }
 
 model UserAchievement {
-  id              String      @id @default(cuid())
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  achievementId   String
-  achievement     Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
-  earnedAt        DateTime    @default(now())
-  notifiedAt      DateTime?
-  
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  earnedAt      DateTime    @default(now())
+  notifiedAt    DateTime?
+
   @@unique([userId, achievementId])
   @@map("user_achievements")
 }
 
 model UserPoints {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  totalPoints     Int       @default(0)
-  level           Int       @default(1)
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalPoints      Int      @default(0)
+  level            Int      @default(1)
   experiencePoints Int      @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
   @@map("user_points")
 }
 
 // ==================== EVENT MANAGEMENT ====================
 
 model Event {
-  id              String            @id @default(cuid())
-  title           String
-  description     String            @db.Text
-  slug            String            @unique
-  eventType       EventType         @default(WEBINAR)
-  hostType        HostType          @default(USER)
+  id                 String        @id @default(cuid())
+  title              String
+  description        String        @db.Text
+  slug               String        @unique
+  eventType          EventType     @default(WEBINAR)
+  hostType           HostType      @default(USER)
   organizationHostId String?
-  userHostId      String?
-  hostOrg         Organization?     @relation("hostOrganization", fields: [organizationHostId], references: [id])
-  hostUser        User?             @relation("hostUser", fields: [userHostId], references: [id])
-  startTime       DateTime
-  endTime         DateTime
-  timezone        String            @default("UTC")
-  location        String?
-  meetingLink     String?
-  maxAttendees    Int?
-  currentAttendees Int              @default(0)
-  price           Float?            @default(0)
-  currency        String            @default("USD")
-  coverImage      String?
-  status          EventStatus       @default(SCHEDULED)
-  recordingUrl    String?
-  slidesUrl       String?
-  tags            String[]
-  isDeleted       Boolean           @default(false)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  
-  registrations   EventRegistration[]
-  feedback        EventFeedback[]
-  attachments     EventAttachment[]
-  
+  userHostId         String?
+  hostOrg            Organization? @relation("hostOrganization", fields: [organizationHostId], references: [id])
+  hostUser           User?         @relation("hostUser", fields: [userHostId], references: [id])
+  startTime          DateTime
+  endTime            DateTime
+  timezone           String        @default("UTC")
+  location           String?
+  meetingLink        String?
+  maxAttendees       Int?
+  currentAttendees   Int           @default(0)
+  price              Float?        @default(0)
+  currency           String        @default("USD")
+  coverImage         String?
+  status             EventStatus   @default(SCHEDULED)
+  recordingUrl       String?
+  slidesUrl          String?
+  tags               String[]
+  isDeleted          Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  registrations EventRegistration[]
+  feedback      EventFeedback[]
+  attachments   EventAttachment[]
+
   @@index([eventType])
   @@index([startTime])
   @@index([status])
@@ -1807,88 +1811,88 @@ model Event {
 }
 
 model EventRegistration {
-  id              String    @id @default(cuid())
-  eventId         String
-  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status          RegistrationStatus @default(REGISTERED)
-  attendedAt      DateTime?
-  feedbackGiven   Boolean   @default(false)
-  registeredAt    DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
+  id            String             @id @default(cuid())
+  eventId       String
+  event         Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        RegistrationStatus @default(REGISTERED)
+  attendedAt    DateTime?
+  feedbackGiven Boolean            @default(false)
+  registeredAt  DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
   @@unique([eventId, userId])
   @@index([status])
   @@map("event_registrations")
 }
 
 model EventFeedback {
-  id              String    @id @default(cuid())
-  eventId         String
-  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rating          Int
-  comment         String?   @db.Text
-  wouldRecommend  Boolean?
-  createdAt       DateTime  @default(now())
-  
+  id             String   @id @default(cuid())
+  eventId        String
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating         Int
+  comment        String?  @db.Text
+  wouldRecommend Boolean?
+  createdAt      DateTime @default(now())
+
   @@unique([eventId, userId])
   @@map("event_feedback")
 }
 
 model EventAttachment {
-  id              String    @id @default(cuid())
-  eventId         String
-  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  documentId      String
-  document        Document  @relation(fields: [documentId], references: [iddocument], onDelete: Cascade)
-  attachmentType  String
-  createdAt       DateTime  @default(now())
-  
+  id             String   @id @default(cuid())
+  eventId        String
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  documentId     String
+  document       Document @relation(fields: [documentId], references: [iddocument], onDelete: Cascade)
+  attachmentType String
+  createdAt      DateTime @default(now())
+
   @@map("event_attachments")
 }
 
 // ==================== CONTENT INTERACTIONS ====================
 
 model ContentLike {
-  id              String      @id @default(cuid())
-  contentId       String
-  contentType     ContentType
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt       DateTime    @default(now())
-  
+  id          String      @id @default(cuid())
+  contentId   String
+  contentType ContentType
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+
   @@unique([contentId, contentType, userId])
   @@index([contentId, contentType])
   @@map("content_likes")
 }
 
 model ContentFlag {
-  id              String      @id @default(cuid())
-  contentId       String
-  contentType     ContentType
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reason          String
-  createdAt       DateTime    @default(now())
-  
+  id          String      @id @default(cuid())
+  contentId   String
+  contentType ContentType
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason      String
+  createdAt   DateTime    @default(now())
+
   @@unique([contentId, contentType, userId])
   @@map("content_flags")
 }
 
 model ContentView {
-  id              String      @id @default(cuid())
-  contentId       String
-  contentType     ContentType
-  userId          String?
-  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  ipAddress       String?
-  userAgent       String?
-  referrer        String?
-  viewedAt        DateTime    @default(now())
-  
+  id          String      @id @default(cuid())
+  contentId   String
+  contentType ContentType
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+  viewedAt    DateTime    @default(now())
+
   @@index([contentId, contentType])
   @@index([contentId, contentType, viewedAt])
   @@index([viewedAt])
@@ -1896,14 +1900,14 @@ model ContentView {
 }
 
 model ContentShare {
-  id              String      @id @default(cuid())
-  contentId       String
-  contentType     ContentType
-  sharedBy        String
-  user            User        @relation(fields: [sharedBy], references: [id], onDelete: Cascade)
-  platform        String?
-  sharedAt        DateTime    @default(now())
-  
+  id          String      @id @default(cuid())
+  contentId   String
+  contentType ContentType
+  sharedBy    String
+  user        User        @relation(fields: [sharedBy], references: [id], onDelete: Cascade)
+  platform    String?
+  sharedAt    DateTime    @default(now())
+
   @@index([contentId, contentType])
   @@map("content_shares")
 }
@@ -1911,17 +1915,17 @@ model ContentShare {
 // ==================== SAVED DRAFTS ====================
 
 model SavedDraft {
-  id              String      @id @default(cuid())
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contentType     ContentType
-  contentId       String?
-  data            Json
-  title           String?
-  autoSave        Boolean     @default(false)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentType ContentType
+  contentId   String?
+  data        Json
+  title       String?
+  autoSave    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
   @@index([userId, contentType])
   @@map("saved_drafts")
 }
@@ -1929,26 +1933,26 @@ model SavedDraft {
 // ==================== SPONSORED CONTENT ====================
 
 model SponsoredContent {
-  id              String          @id @default(cuid())
-  title           String
-  description     String          @db.Text
-  targetUrl       String
-  contentType     ContentType
-  contentId       String
-  sponsorId       String
-  sponsor         Organization    @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
-  budget          Float
-  spent           Float           @default(0)
-  impressions     Int             @default(0)
-  clicks          Int             @default(0)
-  startDate       DateTime
-  endDate         DateTime
-  status          SponsoredStatus @default(PENDING)
-  createdBy       String
-  creator         User            @relation(fields: [createdBy], references: [id])
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  
+  id          String          @id @default(cuid())
+  title       String
+  description String          @db.Text
+  targetUrl   String
+  contentType ContentType
+  contentId   String
+  sponsorId   String
+  sponsor     Organization    @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  budget      Float
+  spent       Float           @default(0)
+  impressions Int             @default(0)
+  clicks      Int             @default(0)
+  startDate   DateTime
+  endDate     DateTime
+  status      SponsoredStatus @default(PENDING)
+  createdBy   String
+  creator     User            @relation(fields: [createdBy], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
   @@index([status])
   @@index([startDate, endDate])
   @@map("sponsored_content")
@@ -1957,22 +1961,22 @@ model SponsoredContent {
 // ==================== NOTIFICATION SYSTEM ====================
 
 model Notification {
-  notification_id String       @id @default(cuid())
+  notification_id String           @id @default(cuid())
   userId          String
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   type            NotificationType
   title           String
-  message         String       @db.Text
+  message         String           @db.Text
   data            Json?
   contentId       String?
   contentType     ContentType?
-  isRead          Boolean      @default(false)
+  isRead          Boolean          @default(false)
   readAt          DateTime?
-  isDelivered     Boolean      @default(false)
+  isDelivered     Boolean          @default(false)
   deliveredAt     DateTime?
-  emailSent       Boolean      @default(false)
-  createdAt       DateTime     @default(now())
-  
+  emailSent       Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+
   @@index([userId, isRead])
   @@index([userId, isRead, createdAt])
   @@index([type, createdAt])
@@ -1983,18 +1987,18 @@ model Notification {
 // ==================== ANALYTICS & ENGAGEMENT ====================
 
 model UserActivityLog {
-  id              String      @id @default(cuid())
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activityType    String
-  contentId       String?
-  contentType     ContentType?
-  metadata        Json?
-  ipAddress       String?
-  userAgent       String?
-  sessionId       String?
-  createdAt       DateTime    @default(now())
-  
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityType String
+  contentId    String?
+  contentType  ContentType?
+  metadata     Json?
+  ipAddress    String?
+  userAgent    String?
+  sessionId    String?
+  createdAt    DateTime     @default(now())
+
   @@index([userId, activityType])
   @@index([createdAt])
   @@index([sessionId])
@@ -2002,19 +2006,19 @@ model UserActivityLog {
 }
 
 model DailyAnalytics {
-  id              String      @id @default(cuid())
-  date            DateTime    @unique
-  totalUsers      Int         @default(0)
-  activeUsers     Int         @default(0)
-  newUsers        Int         @default(0)
-  totalContent    Int         @default(0)
-  newContent      Int         @default(0)
-  totalInteractions Int       @default(0)
-  totalViews      Int         @default(0)
-  totalShares     Int         @default(0)
-  metadata        Json?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
+  id                String   @id @default(cuid())
+  date              DateTime @unique
+  totalUsers        Int      @default(0)
+  activeUsers       Int      @default(0)
+  newUsers          Int      @default(0)
+  totalContent      Int      @default(0)
+  newContent        Int      @default(0)
+  totalInteractions Int      @default(0)
+  totalViews        Int      @default(0)
+  totalShares       Int      @default(0)
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
   @@map("daily_analytics")
 }
